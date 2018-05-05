@@ -20,6 +20,7 @@ perf_indicators.c perf_indicators.h \
 $(PROCPIDSTATS_SOURCE) \
 spp_httpinspect.c spp_httpinspect.h \
 snort_httpinspect.c snort_httpinspect.h \
+spp_knxnetip.c spp_knxnetip.h \
 portscan.c portscan.h \
 spp_sfportscan.c spp_sfportscan.h \
 spp_frag3.c spp_frag3.h \

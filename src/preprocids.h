@@ -81,6 +81,7 @@
 #define PP_HTTPMOD                34
 #define PP_HTTP2                  35
 #define PP_MAX                    36
+#define PP_KNXNETIP				  37
 
 #define PP_ENABLE_ALL (~0)
 #define PP_DISABLE_ALL 0x0

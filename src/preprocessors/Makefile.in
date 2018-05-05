@@ -112,21 +112,22 @@ am__libspp_a_SOURCES_DIST = spp_arpspoof.c spp_arpspoof.h spp_bo.c \
 	perf-flow.c perf-flow.h perf-event.c perf-event.h \
 	perf_indicators.c perf_indicators.h sfprocpidstats.c \
 	sfprocpidstats.h spp_httpinspect.c spp_httpinspect.h \
-	snort_httpinspect.c snort_httpinspect.h portscan.c portscan.h \
-	spp_sfportscan.c spp_sfportscan.h spp_frag3.c spp_frag3.h \
-	str_search.c str_search.h spp_stream6.c spp_stream6.h \
-	spp_session.c spp_session.h session_api.c session_api.h \
-	stream_api.c stream_api.h spp_normalize.c spp_normalize.h \
-	normalize.c normalize.h sip_common.h
+	snort_httpinspect.c snort_httpinspect.h spp_knxnetip.c \
+	spp_knxnetip.h portscan.c portscan.h spp_sfportscan.c \
+	spp_sfportscan.h spp_frag3.c spp_frag3.h str_search.c \
+	str_search.h spp_stream6.c spp_stream6.h spp_session.c \
+	spp_session.h session_api.c session_api.h stream_api.c \
+	stream_api.h spp_normalize.c spp_normalize.h normalize.c \
+	normalize.h sip_common.h
 @BUILD_PROCPIDSTATS_TRUE@am__objects_1 = sfprocpidstats.$(OBJEXT)
 am_libspp_a_OBJECTS = spp_arpspoof.$(OBJEXT) spp_bo.$(OBJEXT) \
 	spp_rpc_decode.$(OBJEXT) spp_perfmonitor.$(OBJEXT) \
 	perf.$(OBJEXT) perf-base.$(OBJEXT) perf-flow.$(OBJEXT) \
 	perf-event.$(OBJEXT) perf_indicators.$(OBJEXT) \
 	$(am__objects_1) spp_httpinspect.$(OBJEXT) \
-	snort_httpinspect.$(OBJEXT) portscan.$(OBJEXT) \
-	spp_sfportscan.$(OBJEXT) spp_frag3.$(OBJEXT) \
-	str_search.$(OBJEXT) spp_stream6.$(OBJEXT) \
+	snort_httpinspect.$(OBJEXT) spp_knxnetip.$(OBJEXT) \
+	portscan.$(OBJEXT) spp_sfportscan.$(OBJEXT) \
+	spp_frag3.$(OBJEXT) str_search.$(OBJEXT) spp_stream6.$(OBJEXT) \
 	spp_session.$(OBJEXT) session_api.$(OBJEXT) \
 	stream_api.$(OBJEXT) spp_normalize.$(OBJEXT) \
 	normalize.$(OBJEXT)
@@ -364,6 +365,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -387,6 +389,7 @@ perf_indicators.c perf_indicators.h \
 $(PROCPIDSTATS_SOURCE) \
 spp_httpinspect.c spp_httpinspect.h \
 snort_httpinspect.c snort_httpinspect.h \
+spp_knxnetip.c spp_knxnetip.h \
 portscan.c portscan.h \
 spp_sfportscan.c spp_sfportscan.h \
 spp_frag3.c spp_frag3.h \

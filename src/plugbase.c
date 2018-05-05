@@ -58,6 +58,7 @@
 #include "preprocessors/spp_arpspoof.h"
 #include "preprocessors/spp_perfmonitor.h"
 #include "preprocessors/spp_httpinspect.h"
+#include "preprocessors/spp_knxnetip.h"
 #include "preprocessors/spp_sfportscan.h"
 #include "preprocessors/spp_frag3.h"
 #include "preprocessors/spp_normalize.h"
@@ -697,6 +698,7 @@ void RegisterPreprocessors(void)
     SetupRpcDecode();
     SetupBo();
     SetupHttpInspect();
+    SetupKNXnetIP();
     SetupPerfMonitor();
     SetupSfPortscan();
 }
