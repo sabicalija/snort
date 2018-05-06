@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
-#include "knxutil.h"
+#include "utils/knxutil.h"
 
 #define KNXNETIP_PROTOCOL_VERSION 0x10
 #define KNXNETIP_HEADER_LENGTH 0x06
@@ -61,14 +61,14 @@ typedef struct _DIBIPCurrent {
 	uint8_t reserved;
 } DIBIPCurrent;
 
+typedef struct _DIBKNXAddress {
+	uint16_t address;
+} DIBKNXAddress;
+
 typedef struct _DIBKNXAddressS {
 	uint8_t length;
 	DIBKNXAddress **pdata;
 } DIBKNXAddressS;
-
-typedef struct _DIBKNXAddress {
-	uint16_t address;
-} DIBKNXAddress;
 
 typedef struct _DIBMFRData {
 

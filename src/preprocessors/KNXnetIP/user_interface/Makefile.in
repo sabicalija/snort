@@ -88,8 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-
-subdir = src/preprocessors/Session
+subdir = src/preprocessors/KNXnetIP/user_interface
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -105,16 +104,12 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libknxnetip_a_AR = $(AR) $(ARFLAGS)
-libknxnetip_a_DEPENDENCIES = \
-    user_interface/knx_ui_snort.o \
-    user_interface/knx_ui_config.o \
-    knxnetip.o \
-	$(am__append_2)
-am__libknxnetip_a_SOURCES_DIST = knxnetip.c
-am_libknxnetip_a_OBJECTS = knxnetip.$(OBJEXT) \
-	$(am__objects_1)
-libknxnetip_a_OBJECTS = $(am_libknxnetip_a_OBJECTS)
+libknx_ui_a_AR = $(AR) $(ARFLAGS)
+libknx_ui_a_LIBADD =
+am_libknx_ui_a_OBJECTS = \
+knx_ui_config.$(OBJEXT) \
+knx_ui_snort.$(OBJEXT) 
+libknx_ui_a_OBJECTS = $(am_libknx_ui_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -152,8 +147,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libknxnetip_a_SOURCES)
-DIST_SOURCES = $(am__libknxnetip_a_SOURCES_DIST)
+SOURCES = $(libknx_ui_a_SOURCES)
+DIST_SOURCES = $(libknx_ui_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -315,17 +310,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign no-dependencies
-noinst_LIBRARIES = libknxnetip.a
-libknxnetip_a_SOURCES = knxnetip.c knxnetip.h \
-	$(am__append_1)
+noinst_LIBRARIES = libknx_ui.a
+libknx_ui_a_SOURCES = \
+knx_ui_config.c \
+knx_ui_snort.c
 
-SUBDIRS = user_interface
-	
-libknxnetip_a_LIBADD = \
-    user_interface/knx_ui_snort.o \
-    user_interface/knx_ui_config.o \
-    knxnetip.o \
-	$(am__append_2)
 all: all-am
 
 .SUFFIXES:
@@ -339,9 +328,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/preprocessors/Session/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/preprocessors/KNXnetIP/user_interface/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/preprocessors/Session/Makefile
+	  $(AUTOMAKE) --foreign src/preprocessors/KNXnetIP/user_interface/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -363,10 +352,10 @@ $(am__aclocal_m4_deps):
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 
-libknxnetip.a: $(libknxnetip_a_OBJECTS) $(libknxnetip_a_DEPENDENCIES) $(EXTRA_libknxnetip_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libknxnetip.a
-	$(AM_V_AR)$(libknxnetip_a_AR) libknxnetip.a $(libknxnetip_a_OBJECTS) $(libknxnetip_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libknxnetip.a
+libknx_ui.a: $(libknx_ui_a_OBJECTS) $(libknx_ui_a_DEPENDENCIES) $(EXTRA_libknx_ui_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libknx_ui.a
+	$(AM_V_AR)$(libknx_ui_a_AR) libknx_ui.a $(libknx_ui_a_OBJECTS) $(libknx_ui_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libknx_ui.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

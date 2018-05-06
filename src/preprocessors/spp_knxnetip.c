@@ -2,21 +2,77 @@
  * spp_knxnetip.c
  *
  *  Created on: May 6, 2018
- *      Author: alija
+ *  Author: Alija Sabic
+ *  E-Mail: sabic@technikum-wien.at
  */
-#include "preprocids.h"
-#include "plugbase.h"
+#include <string.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "decode.h"
-#include "session_api.h"
+#include "plugbase.h"
 #include "snort_debug.h"
+#include "parser.h"
+
 #include "spp_knxnetip.h"
 #include "knxnetip.h"
+#include "user_interface/knx_ui_config.h"
+#include "user_interface/knx_ui_snort.h"
 
-#define GLOBAL_KEYWORD "knxnetip"
-#define SERVER_KEYWORD "knxnetip_server"
+//#include "preprocids.h"
 
+//# pp spec.
+
+//# snort/profiler/mstring/...
+#include "sp_preprocopt.h"
+
+#ifdef TARGET_BASED
+#include "session_api.h"
+#endif
+
+//# policy
+//#include "sfPolicy.h"
+//#include "file_api.h"
+
+//# reload
+
+//# oappid
+
+/*
+ * Preprocessor initialization
+ */
+
+// DEFINES
+
+
+//const char *PROTOCOL_NAME = "KNXnet/IP";
+
+/* Length of the error string buffer. */
+#define ERRSTRLEN 1000
+
+// EXT. GLOBALS
+/* Variables that we need from Snort to log errors correctly, etc.. */
+extern char *file_name;
+extern int file_line;
+
+// GLOBALS
+/* Note: This is the only way to work with Snort preprocessors.
+ * User configuration, that must be kept between the `Init` and
+ * `Process` function, has to use global variables, as there is
+ * no further interaction between the two.
+ */
+tSfPolicyUserContextId knx_config = NULL;
+
+// PROTOTYPES
 static void KNXnetIPInit(struct _SnortConfig *sc, char *args);
 static void KNXnetIPProcess(Packet *p, void *ctx);
+
+static int KNXnetIPEncodeInit(struct _SnortConfig *sc, char *name, char *parameters, void **dataPtr);
+static int KNXnetIPEncodeEval(void *p, const uint8_t **cursor, void *dataPtr);
+static void KNXnetIPEncodeCleanup(void *dataPtr);
+static void KNXnetIPRegisterRuleOptions(struct _SnortConfig *sc);
 
 #ifdef SNORT_RELOAD
 	static void KNXnetIPReloadGlobal(struct _SnortConfig *sc, char *args, void **new_config);
@@ -28,9 +84,112 @@ static void KNXnetIPProcess(Packet *p, void *ctx);
 
 static void KNXnetIPInit(struct _SnortConfig *sc, char *args)
 {
-	AddFuncToPreprocList(sc, KNXnetIPProcess, PRIORITY_APPLICATION, PP_KNXNETIP, PROTO_BIT__UDP);
-	session_api->enable_preproc_all_ports( sc, PP_KNXNETIP, PROTO_BIT__UDP );
+	char errstr[ERRSTRLEN];
+	int errstrlen = ERRSTRLEN;
+	int ret;
+	char *pcToken;
+	KNXNETIP_CONF *pPolicyConfig = NULL;
+	tSfPolicyId policy_id = getParserPolicy(sc);
+
+	if ((args == NULL) || (strlen(args) == 0))
+	{
+		ParseError("No arguments to KNXnetIP configuration.");
+	}
+
+	/* Find out what is getting configured */
+	pcToken = strtok(args, CONF_SEPARATORS);
+	if (pcToken == NULL)
+	{
+		FatalError("%s(%d)strtok returned NULL when it should not.",
+				   __FILE__, __LINE__);
+	}
+
+	if (knx_config == NULL)
+	{
+		knx_config = sfPolicyConfigCreate();
+	}
+
+	/*
+	 * Global Configuration Processing
+	 */
+	sfPolicyUserPolicySet(knx_config, policy_id);
+	pPolicyConfig = (KNXNETIP_CONF *)sfPolicyUserDataGetCurrent(knx_config);
+	if (pPolicyConfig == NULL)
+	{
+		if (strcasecmp(pcToken, GLOBAL) != 0)
+		{
+			ParseError("Must configure the knxnetip global configuration first.");
+
+		}
+
+		KNXnetIPRegisterRuleOptions(sc);
+
+		pPolicyConfig = (KNXNETIP_CONF *)SnortAlloc(sizeof(KNXNETIP_CONF));
+		if (pPolicyConfig == NULL)
+		{
+			ParseError("KNXnetIP preprocessor: memory allocate failed.\n");
+		}
+
+		sfPolicyUserDataSetCurrent(knx_config, pPolicyConfig);
+
+		ret = KNXnetIPInitializeGlobalConfig(pPolicyConfig, errstr, errstrlen);
+
+		if (ret == 0)
+		{
+			ret = KNXnetIPProcessGlobalConf(pPolicyConfig, errstr, errstrlen);
+
+			if (ret == 0)
+			{
+				KNXnetIPPrintGlobalConf(pPolicyConfig);
+
+				AddFuncToPreprocList(sc, KNXnetIPProcess, PRIORITY_APPLICATION, PP_KNXNETIP, PROTO_BIT__UDP);
+				session_api->enable_preproc_all_ports( sc, PP_KNXNETIP, PROTO_BIT__UDP );
+			}
+		}
+
+	}
+	else
+	{
+		if (strcasecmp(pcToken, SERVER) != 0)
+		{
+			if (strcasecmp(pcToken, GLOBAL) != 0)
+			{
+				ParseError("Must configure the knxnetip global configuration first.");
+			}
+			else
+			{
+				ParseError("Invalid knxnetip token: %s.", pcToken);
+			}
+		}
+
+		ret = KNXnetIPProcessUniqueServerConf(sc, pPolicyConfig, errstr, errstrlen);
+
+	}
 }
+
+static int KNXnetIPEncodeInit(struct _SnortConfig *sc, char *name, char *parameters, void **dataPtr)
+{
+	return 0;
+}
+
+static int KNXnetIPEncodeEval(void *p, const uint8_t **cursor, void *dataPtr)
+{
+	return DETECTION_OPTION_NO_MATCH;
+}
+
+static void KNXnetIPEncodeCleanup(void *dataPtr)
+{
+
+}
+
+static void KNXnetIPRegisterRuleOptions(struct _SnortConfig *sc)
+{
+	RegisterPreprocessorRuleOption(sc, "knxnetip_encode", &KNXnetIPEncodeInit,
+									&KNXnetIPEncodeEval, &KNXnetIPEncodeCleanup, NULL,
+									NULL, NULL, NULL);
+}
+
+
 
 void SetupKNXnetIP(void)
 {

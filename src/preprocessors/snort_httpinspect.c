@@ -669,7 +669,7 @@ static int ProcessDecompressDepth(HTTPINSPECT_GLOBAL_CONF *GlobalConf,
 /**
 **  This is where we process the global configuration for HttpInspect.
 **
-**  We set the values of the global configuraiton here.  Any errors that
+**  We set the values of the global configuration here.  Any errors that
 **  are encountered are specified in the error string and the type of
 **  error is returned through the return code, i.e. fatal, non-fatal.
 **
@@ -686,12 +686,12 @@ static int ProcessDecompressDepth(HTTPINSPECT_GLOBAL_CONF *GlobalConf,
 **
 **  @param GlobalConf  pointer to the global configuration
 **  @param ErrorString error string buffer
-**  @param ErrStrLen   the lenght of the error string buffer
+**  @param ErrStrLen   the length of the error string buffer
 **
 **  @return an error code integer
 **          (0 = success, >0 = non-fatal error, <0 = fatal error)
 **
-**  @retval  0 successs
+**  @retval  0 success
 **  @retval -1 generic fatal error
 **  @retval  1 generic non-fatal error
 */

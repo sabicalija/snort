@@ -2,7 +2,8 @@
  * knxnetip.c
  *
  *  Created on: May 6, 2018
- *      Author: alija
+ *  Author: Alija Sabic
+ *  E-Mail: sabic@technikum-wien.at
  */
 #include "knxnetip.h"
 #include "util.h"
@@ -42,7 +43,7 @@ static void append_hpai(KNXnetIPPacket *p)
 	// Allocate larger array for new DIB entry
 	HPAI **new_data = (HPAI**)SnortAlloc((new_size) * sizeof(HPAI));
 
-	memset(new_data, 0, sizeof(new_size));
+	memset(new_data, 0, (new_size) * sizeof(HPAI));
 
 	// Copy current HPAI pointer in new array
 	for (int i = 0; i < p->body.hpai.length; i++)
@@ -85,7 +86,7 @@ static void append_dib_svc(KNXnetIPPacket *p)
 	// Allocate larger array for new DIBSuppSvcFamily entry
 	DIBSuppSvcFamily **new_data = (DIBSuppSvcFamily **)SnortAlloc((new_size) * sizeof(DIBSuppSvcFamily*));
 
-	memset(new_data, 0, sizeof(new_size));
+	memset(new_data, 0, (new_size) * sizeof(DIBSuppSvcFamily*));
 
 	// Copy current DIBSuppSvcFamily pointer in new array
 	for (int i = 0; i < p->body.dib.pdata[entry]->device_service.length; i++)
@@ -124,7 +125,7 @@ static void append_dib(KNXnetIPPacket *p)
 	// Allocate larger array for new DIB entry
 	DIB **new_data = (DIB **)SnortAlloc((new_size) * sizeof(DIB*));
 
-	memset(new_data, 0, sizeof(new_size));
+	memset(new_data, 0, (new_size) * sizeof(DIB*));
 
 	// Copy current DIB pointer in new array
 	for (int i = 0; i < p->body.dib.length; i++)
@@ -207,9 +208,14 @@ void free_knxnetip(KNXnetIPPacket *p)
 		case DESCRIPTION_REQ:
 			for(int i = 0; i < p->body.hpai.length; i++)
 			{
-				free(p->body.hpai.pdata[i]);
+				if (p->body.hpai.pdata[i]) {
+					free(p->body.hpai.pdata[i]);
+				}
 			}
-			free(p->body.hpai.pdata);
+
+			if (p->body.hpai.pdata) {
+				free(p->body.hpai.pdata);
+			}
 			break;
 	}
 
@@ -227,15 +233,23 @@ void free_knxnetip(KNXnetIPPacket *p)
 				{
 					for(int j = 0; j < p->body.dib.pdata[i]->device_service.length; j++)
 					{
-						free(p->body.dib.pdata[i]->device_service.pdata[j]);
+						if (p->body.dib.pdata[i]->device_service.pdata[j]) {
+							free(p->body.dib.pdata[i]->device_service.pdata[j]);
+						}
 					}
-					free(p->body.dib.pdata[i]->device_service.pdata);
+					if (p->body.dib.pdata[i]->device_service.pdata) {
+						free(p->body.dib.pdata[i]->device_service.pdata);
+					}
 				}
 
-
-				free(p->body.dib.pdata[i]);
+				if (p->body.dib.pdata[i]) {
+					free(p->body.dib.pdata[i]);
+				}
 			}
-			free(p->body.dib.pdata);
+
+			if (p->body.dib.pdata) {
+				free(p->body.dib.pdata);
+			}
 			break;
 	}
 }
