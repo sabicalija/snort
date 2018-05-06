@@ -10,6 +10,7 @@
 #include "session_api.h"
 #include "snort_debug.h"
 #include "spp_knxnetip.h"
+#include "knxnetip.h"
 
 static void KNXnetIPInit(struct _SnortConfig *sc, char *args);
 static void KNXnetIPProcess(Packet *p, void *ctx);
@@ -24,6 +25,7 @@ static void KNXnetIPInit(struct _SnortConfig *sc, char *args)
 static void KNXnetIPProcess(Packet *p, void *ctx)
 {
 	int i = 0;
+	dissect_knxnetip(p->data);
 }
 
 void SetupKNXnetIP(void)

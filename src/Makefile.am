@@ -81,6 +81,7 @@ target-based/libtarget_based.a \
 preprocessors/HttpInspect/libhttp_inspect.a \
 preprocessors/Session/libsession.a \
 preprocessors/Stream6/libstream6.a \
+preprocessors/KNXnetIP/libknxnetip.a \
 sfutil/libsfutil.a \
 control/libsfcontrol.a \
 file-process/libfileAPI.a \

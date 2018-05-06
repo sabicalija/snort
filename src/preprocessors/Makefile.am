@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libspp.a
 
-SUBDIRS = HttpInspect Stream6 Session
+SUBDIRS = HttpInspect Stream6 Session KNXnetIP
 
 if BUILD_PROCPIDSTATS
 PROCPIDSTATS_SOURCE = sfprocpidstats.c sfprocpidstats.h
