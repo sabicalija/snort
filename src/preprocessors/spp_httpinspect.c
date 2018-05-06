@@ -53,7 +53,6 @@
 #include "decode.h"
 #include "plugbase.h"
 #include "snort_debug.h"
-#include "util.h"
 #include "parser.h"
 
 #include "hi_ui_config.h"
