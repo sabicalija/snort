@@ -13,10 +13,11 @@
 
 #include "snort.h"
 
-int KNXnetIPInitializeGlobalConfig(KNXNETIP_CONF *config, char *ErrorString, int iErrStrLen);
-int KNXnetIPProcessGlobalConf(KNXNETIP_CONF *GlobalConf, char *errstr, int errstrlen);
-int KNXnetIPProcessUniqueServerConf(struct _SnortConfig *sc, KNXNETIP_CONF *GlobalConf, char *errstr, int errstrlen);
-int KNXnetIPPrintGlobalConf(KNXNETIP_CONF *GlobalConf);
-int KNXnetIPPrintServerConf(KNXNETIP_SERVER_CONF *ServerConf);
+int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config);
+int KNXnetIPInitializeGlobalConfig(KNXNETIP_CONF *config, char *errstr, int errstrlen);
+int KNXnetIPInitializeServerConfig(KNXNETIP_CONF *config, char *errstr, int errstrlen);
+int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *errstr, int errstrlen);
+int KNXnetIPPrintGlobalConf(KNXNETIP_CONF *config);
+int KNXnetIPPrintServerConf(KNXNETIP_CONF *config);
 
 #endif /* __KNX_USER_INTERFACE_SNORT__ */

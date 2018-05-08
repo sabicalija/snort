@@ -32,7 +32,7 @@
  */
 #define CONF_SEPARATORS 		" \t\n\r"
 
-#define MAX_FILENAME 1000
+#define MAX_FILENAME 			(80)
 
 /*
  * IP Address list delimiters
@@ -99,7 +99,8 @@ typedef struct _KNXNETIP_CONF
 	KNXNETIP_SERVER_CONF **pdata;
 } KNXNETIP_CONF;
 
-int knx_ui_append_conf(KNXNETIP_CONF *GlobalConf);
-int knx_ui_config_init_global_conf(KNXNETIP_CONF *GlobalConf);
+int knx_ui_append_server_conf(KNXNETIP_CONF *config);
+int knx_ui_append_conf(KNXNETIP_CONF *config);
+int knx_ui_load_filename(KNXNETIP_CONF *config);
 
 #endif /* __KNX_USER_INTERFACE_CONFIG__ */

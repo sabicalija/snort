@@ -20,6 +20,21 @@
  */
 #define KNX_PROGRAMMING 			"programming"
 #define KNX_PHYSICAL_ADDRESSING 	"physical_address"
+#define NO_PHYSICAL_ADDRESSING		"!physical_address"
+#define KNX_GROUP_ADDRESS_FILE		"file"
+
+int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config)
+{
+	KNXNETIP_SERVER_CONF *from, *to;
+
+	from = config->pdata[GLOBAL_CONFIG];
+	to = config->pdata[config->length-1];
+
+	to->bPhysicalAddressing = from->bPhysicalAddressing;
+	to->bProgramming = from->bProgramming;
+
+	return 0;
+}
 
 int KNXnetIPInitializeGlobalConfig(KNXNETIP_CONF *config, char *errstr, int errstrlen)
 {
@@ -31,42 +46,77 @@ int KNXnetIPInitializeGlobalConfig(KNXNETIP_CONF *config, char *errstr, int errs
 		return -1;
 	}
 
-	ret = knx_ui_config_init_global_conf(config);
-	if (ret) {
-		snprintf(errstr, errstrlen, "Error initializing Global Configuration.");
+	ret = knx_ui_append_conf(config);
+	if (ret)
+	{
+		snprintf(errstr, errstrlen, "Error initializing configuration.");
 		return -1;
 	}
 
 	return 0;
 }
 
-int KNXnetIPProcessGlobalConf(KNXNETIP_CONF *GlobalConf, char *errstr, int errstrlen)
+int KNXnetIPInitializeServerConfig(KNXNETIP_CONF *config, char *errstr, int errstrlen)
+{
+	int ret;
+
+	if ((ret = KNXnetIPInitializeGlobalConfig(config, errstr, errstrlen)) == 0)
+	{
+		KNXnetIPCopyGlobalConf(config);
+	}
+
+	return ret;
+}
+
+int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *errstr, int errstrlen)
 {
 	int ret;
 	char *pcToken;
-	int iTokens = 0;
+	boolean bTokens = false;
+	uint8_t entry = config->length - 1;
 
 	while ((pcToken = strtok(NULL, CONF_SEPARATORS)) != NULL)
 	{
-		iTokens = 1;
+		bTokens = true;
 
+		/* Detect Programming */
 		if(!strcmp(KNX_PROGRAMMING, pcToken))
 		{
-			GlobalConf->pdata[GLOBAL_CONFIG]->bProgramming = true;
+			config->pdata[entry]->bProgramming = true;
 		}
+
+		/* Detect Physical Addressing */
 		else if(!strcmp(KNX_PHYSICAL_ADDRESSING, pcToken))
 		{
-			GlobalConf->pdata[GLOBAL_CONFIG]->bPhysicalAddressing = true;
+			config->pdata[entry]->bPhysicalAddressing = true;
 		}
+
+		else if(!strcmp(NO_PHYSICAL_ADDRESSING, pcToken))
+		{
+			config->pdata[entry]->bPhysicalAddressing = false;
+		}
+
+		else if(!strcmp(KNX_GROUP_ADDRESS_FILE, pcToken))
+		{
+			knx_ui_load_filename(config);
+		}
+
+		/* Not supported/recognized option */
 		else
 		{
 			;
 		}
+	}
 
+	if (!bTokens)
+	{
+		SnortSnprintf(errstr, errstrlen, "No tokens to '%s' configuration.", config->length == 1 ? GLOBAL : SERVER);
+		return -1;
 	}
 
 	return 0;
 }
+
 
 int KNXnetIPProcessUniqueServerConf(struct _SnortConfig *sc, KNXNETIP_CONF *GlobalConf, char *errstr, int errstrlen)
 {
@@ -147,12 +197,12 @@ int KNXnetIPProcessUniqueServerConf(struct _SnortConfig *sc, KNXNETIP_CONF *Glob
 		 *  optional:
 		 *  - create lookup table
 		 */
-		knx_ui_append_conf(GlobalConf);
+		knx_ui_append_server_conf(GlobalConf);
 		GlobalConf->pdata[GlobalConf->length-1] = ServerConf;
 
 	}
 
-	KNXnetIPPrintServerConf(ServerConf);
+//	KNXnetIPPrintServerConf(ServerConf);
 	ret = 0;
 
 cleanup:
@@ -164,17 +214,27 @@ cleanup:
 
 }
 
-int KNXnetIPPrintGlobalConf(KNXNETIP_CONF *GlobalConf)
+static int KNXnetIPPrintConf(KNXNETIP_CONF *config)
 {
-	LogMessage("KNXnet/IP Config:\n");
-	LogMessage("    GLOBAL_CONFIG\n");
-	LogMessage("      Detect device programming:       %3s\n", GlobalConf->pdata[GLOBAL_CONFIG]->bProgramming ? "Yes" : "No");
-	LogMessage("      Detect physical addressing:      %3s\n", GlobalConf->pdata[GLOBAL_CONFIG]->bPhysicalAddressing ? "Yes" : "No");
-
+	uint8_t entry = config->length - 1;
+	LogMessage("      Detect device programming:       %3s\n", config->pdata[entry]->bProgramming ? "Yes" : "No");
+	LogMessage("      Detect physical addressing:      %3s\n", config->pdata[entry]->bPhysicalAddressing ? "Yes" : "No");
 	return 0;
 }
 
-int KNXnetIPPrintServerConf(KNXNETIP_SERVER_CONF *ServerConf)
+int KNXnetIPPrintGlobalConf(KNXNETIP_CONF *config)
 {
+	LogMessage("KNXnet/IP Config:\n");
+	LogMessage("  GLOBAL_CONFIG\n");
+	KNXnetIPPrintConf(config);
+	return 0;
+}
+
+int KNXnetIPPrintServerConf(KNXNETIP_CONF *config)
+{
+	uint8_t entry = config->length - 1;
+	LogMessage("    SERVER_CONFIG\n");
+	KNXnetIPPrintConf(config);
+	LogMessage("      Group Address File:              %s\n", config->pdata[entry]->filename);
 	return 0;
 }

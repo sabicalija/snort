@@ -67,6 +67,7 @@ tSfPolicyUserContextId knx_config = NULL;
 
 // PROTOTYPES
 static void KNXnetIPInit(struct _SnortConfig *sc, char *args);
+static void KNXnetIPCleanExit(int signal, void *data);
 static void KNXnetIPProcess(Packet *p, void *ctx);
 
 static int KNXnetIPEncodeInit(struct _SnortConfig *sc, char *name, char *parameters, void **dataPtr);
@@ -107,6 +108,9 @@ static void KNXnetIPInit(struct _SnortConfig *sc, char *args)
 	if (knx_config == NULL)
 	{
 		knx_config = sfPolicyConfigCreate();
+
+		/* Add cleanup function(s) to the appropriate list */
+		AddFuncToPreprocCleanExitList(KNXnetIPCleanExit, NULL, PRIORITY_APPLICATION, PP_KNXNETIP);
 	}
 
 	/*
@@ -136,7 +140,7 @@ static void KNXnetIPInit(struct _SnortConfig *sc, char *args)
 
 		if (ret == 0)
 		{
-			ret = KNXnetIPProcessGlobalConf(pPolicyConfig, errstr, errstrlen);
+			ret = KNXnetIPProcessConf(sc, pPolicyConfig, errstr, errstrlen);
 
 			if (ret == 0)
 			{
@@ -148,6 +152,9 @@ static void KNXnetIPInit(struct _SnortConfig *sc, char *args)
 		}
 
 	}
+	/*
+	 * Server Configuration Processing
+	 */
 	else
 	{
 		if (strcasecmp(pcToken, SERVER) != 0)
@@ -162,7 +169,18 @@ static void KNXnetIPInit(struct _SnortConfig *sc, char *args)
 			}
 		}
 
-		ret = KNXnetIPProcessUniqueServerConf(sc, pPolicyConfig, errstr, errstrlen);
+		ret = KNXnetIPInitializeServerConfig(pPolicyConfig, errstr, errstrlen);
+
+		if (ret == 0)
+		{
+			ret = KNXnetIPProcessConf(sc, pPolicyConfig, errstr, errstrlen);
+
+			if (ret == 0)
+			{
+				KNXnetIPPrintServerConf(pPolicyConfig);
+			}
+		}
+
 
 	}
 }
@@ -209,6 +227,24 @@ void SetupKNXnetIP(void)
 static void KNXnetIPProcess(Packet *p, void *context)
 {
 	dissect_knxnetip(p->data);
+}
+
+static void KNXnetIPCleanExit(int signal, void *data)
+{
+	KNXNETIP_CONF *pPolicyConfig = (KNXNETIP_CONF *)sfPolicyUserDataGetCurrent(knx_config);
+
+	for (int i = 0; i < pPolicyConfig->length; i++)
+	{
+		if (pPolicyConfig->pdata[i])
+		{
+			free(pPolicyConfig->pdata[i]);
+		}
+	}
+
+	if (pPolicyConfig->pdata)
+	{
+		free(pPolicyConfig->pdata);
+	}
 }
 
 

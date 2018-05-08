@@ -43,7 +43,7 @@ static void append_hpai(KNXnetIPPacket *p)
 	// Allocate larger array for new DIB entry
 	HPAI **new_data = (HPAI**)SnortAlloc((new_size) * sizeof(HPAI));
 
-	memset(new_data, 0, (new_size) * sizeof(HPAI));
+//	memset(new_data, 0, (new_size) * sizeof(HPAI));
 
 	// Copy current HPAI pointer in new array
 	for (int i = 0; i < p->body.hpai.length; i++)
@@ -86,7 +86,7 @@ static void append_dib_svc(KNXnetIPPacket *p)
 	// Allocate larger array for new DIBSuppSvcFamily entry
 	DIBSuppSvcFamily **new_data = (DIBSuppSvcFamily **)SnortAlloc((new_size) * sizeof(DIBSuppSvcFamily*));
 
-	memset(new_data, 0, (new_size) * sizeof(DIBSuppSvcFamily*));
+//	memset(new_data, 0, (new_size) * sizeof(DIBSuppSvcFamily*));
 
 	// Copy current DIBSuppSvcFamily pointer in new array
 	for (int i = 0; i < p->body.dib.pdata[entry]->device_service.length; i++)
@@ -125,7 +125,7 @@ static void append_dib(KNXnetIPPacket *p)
 	// Allocate larger array for new DIB entry
 	DIB **new_data = (DIB **)SnortAlloc((new_size) * sizeof(DIB*));
 
-	memset(new_data, 0, (new_size) * sizeof(DIB*));
+//	memset(new_data, 0, (new_size) * sizeof(DIB*));
 
 	// Copy current DIB pointer in new array
 	for (int i = 0; i < p->body.dib.length; i++)
