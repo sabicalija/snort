@@ -185,6 +185,8 @@ static void KNXnetIPInit(struct _SnortConfig *sc, char *args)
 	}
 }
 
+
+
 static int KNXnetIPEncodeInit(struct _SnortConfig *sc, char *name, char *parameters, void **dataPtr)
 {
 	return 0;
@@ -212,14 +214,14 @@ static void KNXnetIPRegisterRuleOptions(struct _SnortConfig *sc)
 void SetupKNXnetIP(void)
 {
 #ifndef SNORT_RELOAD
-	RegisterProprocessor(GLOBAL_KEYWORD, KNXnetIPInit);
-	RegisterPreprocessor(SERVER_KEYWORD, KNXnetIPInit);
+	RegisterProprocessor(KNXNETIP_CONF_KEYWORD, KNXnetIPInit);
+//	RegisterPreprocessor(KNXNETIP_CONF_SERVER_KEYWORD, KNXnetIPInit);
 #else
-	RegisterPreprocessor(GLOBAL_KEYWORD, KNXnetIPInit, KNXnetIPReloadGlobal,
+	RegisterPreprocessor(KNXNETIP_CONF_KEYWORD, KNXnetIPInit, KNXnetIPReloadGlobal,
 						 KNXnetIPReloadVerify, KNXnetIPReloadSwap,
 						 KNXnetIPReloadSwapFree);
-	RegisterPreprocessor(SERVER_KEYWORD, KNXnetIPInit,
-						 KNXnetIPReload, NULL, NULL, NULL);
+//	RegisterPreprocessor(KNXNETIP_CONF_SERVER_KEYWORD, KNXnetIPInit,
+//						 KNXnetIPReload, NULL, NULL, NULL);
 #endif
 	DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Preprocessor: KNXnet/IP is setup...\n"););
 }
@@ -235,6 +237,21 @@ static void KNXnetIPCleanExit(int signal, void *data)
 
 	for (int i = 0; i < pPolicyConfig->length; i++)
 	{
+		// Ip Addresses
+		KNXNETIP_IPS *ipaddr = &pPolicyConfig->pdata[i]->ip;
+		for (int j = 0; j < ipaddr->length; j++)
+		{
+			if (ipaddr->pdata[j])
+			{
+				free(ipaddr->pdata[j]);
+			}
+		}
+
+		if (ipaddr->pdata)
+		{
+			free(ipaddr->pdata);
+		}
+
 		// Group Addresses
 		KNXNETIP_GRPADDRS *grpaddr = &pPolicyConfig->pdata[i]->group_address;
 		for (int j = 0; j < grpaddr->length; j++)

@@ -11,10 +11,13 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+//#include <sys/socket.h>
+#include <netinet/in.h>
+//#include <netinet/ip.h>
 
 // DEFINES
-#define GLOBAL_KEYWORD 			"knxnetip"
-#define SERVER_KEYWORD 			"knxnetip_server"
+#define KNXNETIP_CONF_KEYWORD 			"knxnetip"
+#define KNXNETIP_CONF_SERVER_KEYWORD 	"knxnetip_server"
 
 #define GLOBAL_CONFIG   		(0)
 
@@ -23,8 +26,8 @@
  *  keywords to configure KNXnetIP.  When one of these keywords
  *  are seen, we begin a new section.
  */
-#define GLOBAL 					"global"
-#define SERVER					"server"
+#define GLOBAL 							"global"
+#define SERVER							"server"
 
 /*
  *  The definition of the configuration separators in the snort.conf
@@ -56,7 +59,7 @@
 
 typedef struct _KNXNETIP_IPS {
 	uint8_t length;
-	uint32_t **pdata;
+	struct sockaddr_in **pdata;
 } KNXNETIP_IPS;
 
 typedef struct _KNXNETIP_PORTS {
@@ -111,9 +114,11 @@ typedef void (*fprint)(const char *format,...);
 
 int knx_ui_append_server_conf(KNXNETIP_CONF *config);
 int knx_ui_append_conf(KNXNETIP_CONF *config);
+int knx_ui_load_ip(KNXNETIP_CONF *config);
 int knx_ui_load_filename(KNXNETIP_CONF *config);
 int knx_ui_load_group_address(KNXNETIP_CONF *config);
 int knx_ui_append_group_address(KNXNETIP_SERVER_CONF *srv_config, char *line);
 int knx_ui_process_group_address(KNXNETIP_GRPADDRS *grpaddr, char *line, int start, int end);
 int knx_ui_print_group_addresses(fprint f, KNXNETIP_GRPADDRS *grpaddr);
+int knx_ui_print_ip_addresses(fprint f, KNXNETIP_IPS *ipaddr);
 #endif /* __KNX_USER_INTERFACE_CONFIG__ */

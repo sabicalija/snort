@@ -107,8 +107,8 @@
 /**
 **  snort.conf preprocessor keyword
 */
-#define GLOBAL_KEYWORD   "http_inspect"
-#define SERVER_KEYWORD   "http_inspect_server"
+#define KNXNETIP_CONF_KEYWORD   "http_inspect"
+#define KNXNETIP_CONF_SERVER_KEYWORD   "http_inspect_server"
 
 const char *PROTOCOL_NAME = "HTTP";
 
@@ -733,13 +733,13 @@ static void HttpInspectInit(struct _SnortConfig *sc, char *args)
 void SetupHttpInspect(void)
 {
 #ifndef SNORT_RELOAD
-    RegisterPreprocessor(GLOBAL_KEYWORD, HttpInspectInit);
-    RegisterPreprocessor(SERVER_KEYWORD, HttpInspectInit);
+    RegisterPreprocessor(KNXNETIP_CONF_KEYWORD, HttpInspectInit);
+    RegisterPreprocessor(KNXNETIP_CONF_SERVER_KEYWORD, HttpInspectInit);
 #else
-    RegisterPreprocessor(GLOBAL_KEYWORD, HttpInspectInit, HttpInspectReloadGlobal,
+    RegisterPreprocessor(KNXNETIP_CONF_KEYWORD, HttpInspectInit, HttpInspectReloadGlobal,
                          HttpInspectReloadVerify, HttpInspectReloadSwap,
                          HttpInspectReloadSwapFree);
-    RegisterPreprocessor(SERVER_KEYWORD, HttpInspectInit,
+    RegisterPreprocessor(KNXNETIP_CONF_SERVER_KEYWORD, HttpInspectInit,
                          HttpInspectReload, NULL, NULL, NULL);
 #endif
 #ifdef DUMP_BUFFER
@@ -1672,7 +1672,7 @@ static void HttpInspectReloadGlobal(struct _SnortConfig *sc, char *args, void **
 static void HttpInspectReload(struct _SnortConfig *sc, char *args, void **new_config)
 {
     tSfPolicyUserContextId hi_swap_config;
-    hi_swap_config = (tSfPolicyUserContextId)GetRelatedReloadData(sc, GLOBAL_KEYWORD);
+    hi_swap_config = (tSfPolicyUserContextId)GetRelatedReloadData(sc, KNXNETIP_CONF_KEYWORD);
     _HttpInspectReload(sc, hi_swap_config, args);
 }
 

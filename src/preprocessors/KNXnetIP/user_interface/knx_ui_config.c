@@ -62,6 +62,115 @@ int knx_ui_append_conf(KNXNETIP_CONF *config)
 	return knx_ui_append_server_conf(config);
 }
 
+static int append_ip_address(KNXNETIP_IPS *ipaddr)
+{
+	uint8_t new_size = ipaddr->length + 1;
+
+	// Allocate new pointer table
+	struct sockaddr_in **new_table = (struct sockaddr_in **)SnortAlloc((new_size) * sizeof(struct sockaddr_in *));
+	if (new_table == NULL)
+	{
+		return -1;
+	}
+
+	// Copy current table
+	for (int i = 0; i < ipaddr->length; i++)
+	{
+		new_table[i] = ipaddr->pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1)
+	{
+		if (ipaddr->pdata)
+			free(ipaddr->pdata);
+	}
+	ipaddr->pdata = new_table;
+
+	// Allocate new entry
+	struct sockaddr_in *new_entry = (struct sockaddr_in *)SnortAlloc(sizeof(struct sockaddr_in));
+	if (new_entry == NULL)
+	{
+		return -1;
+	}
+
+	// Append new entry to table
+	ipaddr->pdata[new_size-1] = new_entry;
+	ipaddr->length += 1;
+
+	return 0;
+}
+
+
+static int knx_ui_load_ip_address(KNXNETIP_CONF *config, char *sIp)
+{
+	KNXNETIP_SERVER_CONF *srvcfg = get_last_config_entry(config);
+	append_ip_address(&srvcfg->ip);
+
+	struct sockaddr_in *entry = srvcfg->ip.pdata[srvcfg->ip.length-1];
+	inet_pton(AF_INET, sIp, &entry->sin_addr);
+
+	return 0;
+}
+
+int knx_ui_load_ip(KNXNETIP_CONF *config)
+{
+	int ret = 0;
+	char *pIpAddressList = NULL, *pIpAddressListCopy = NULL, *brkt = NULL;
+	uint8_t entry = config->length-1;
+	KNXNETIP_SERVER_CONF *srvcfg = get_last_config_entry(config);
+
+	char *pcToken = strtok(NULL, CONF_SEPARATORS);
+	if(pcToken == NULL)
+	{
+		return -1;
+	}
+
+	/*
+	 * Convert string to IP address.
+	 */
+	if (strcmp(KNX_START_IPADDR_LIST, pcToken) == 0)
+	{
+		/* Process IP list */
+		if ((pIpAddressList = strtok(NULL, KNX_END_IPADDR_LIST)) == NULL)
+		{
+			ret = -1;
+			goto cleanup;
+		}
+	}
+	else
+	{
+		/* Process IP */
+		pIpAddressList = pcToken;
+	}
+
+	/* Copy IP address(es) */
+	pIpAddressListCopy = strdup(pIpAddressList);
+	if (pIpAddressListCopy == NULL)
+	{
+		return -1;
+	}
+
+
+	for (pcToken = strtok_r(pIpAddressList, CONF_SEPARATORS, &brkt);
+		 pcToken;
+		 pcToken = strtok_r(NULL, CONF_SEPARATORS, &brkt))
+	{
+		knx_ui_load_ip_address(config, pcToken);
+	}
+
+
+	ret = 0;
+
+cleanup:
+	if (pIpAddressListCopy)
+	{
+		free(pIpAddressListCopy);
+	}
+
+	return ret;
+}
+
 int knx_ui_load_filename(KNXNETIP_CONF *config)
 {
 	uint8_t entry = config->length-1;
@@ -239,27 +348,81 @@ int knx_ui_process_group_address(KNXNETIP_GRPADDRS *grpaddr, char *line, int sta
 			cnt++;
 		}
 
-
 	}
 
 	return 0;
 }
 int knx_ui_print_group_addresses(fprint f, KNXNETIP_GRPADDRS *grpaddr)
 {
+	int items_per_line = 5;
 	f("      Loaded Group Addresses:\n");
+	f("                               ");
 	for (int i = 0; i < grpaddr->length; i++)
 	{
 		KNXNETIP_GRPADDR *e = grpaddr->pdata[i];
 
-		if (!(i % 5)) {
+		if (!(i % items_per_line)) {
 			f("        ");
 		}
 		f("%d/%d/%d ", e->main, e->mid, e->sub);
-		if (!((i + 1) % 5)) {
+		if (!((i + 1) % items_per_line)) {
 			f("\n");
+			if (i != (grpaddr->length-1))
+			{
+				f("                               ");
+			}
 		}
 	}
-	f("\n");
 
+	if (items_per_line != 1)
+	{
+		f("\n");
+	}
+
+	return 0;
+}
+
+int knx_ui_print_ip_addresses(fprint f, KNXNETIP_IPS *ipaddr)
+{
+	int items_per_line = 1;
+	if(ipaddr->length > 1)
+	{
+		f("      IP Addresses:");
+	}
+	else
+	{
+		f("      IP Address:  ");
+	}
+
+	for (int i = 0; i < ipaddr->length; i++)
+	{
+		struct sockaddr_in *e = ipaddr->pdata[i];
+		char ipstring[MAX_LINE] = {0};
+		inet_ntop(AF_INET, &e->sin_addr, ipstring, MAX_LINE);
+
+		if (!(i % items_per_line)) {
+			f("                    ");
+		}
+		if (i == (ipaddr->length-1))
+		{
+			f("%s ",ipstring);
+		}
+		else
+		{
+			f("%s, ",ipstring);
+		}
+		if (!((i + 1) % items_per_line)) {
+			f("\n");
+			if (i != (ipaddr->length-1))
+			{
+				f("                   ");
+			}
+		}
+	}
+
+	if (items_per_line != 1)
+	{
+		f("\n");
+	}
 	return 0;
 }
