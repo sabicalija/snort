@@ -147,6 +147,34 @@ static void append_dib(KNXnetIPPacket *p)
 
 }
 
+static boolean append_dib_knxaddress(DIBKNXAddressS *dibknx, const uint8_t *data, int *offset)
+{
+	uint8_t new_size = dibknx->length + 1;
+
+	// Allocate new table
+	DIBKNXAddress **new_table = (DIBKNXAddress **)SnortAlloc((new_size) * sizeof(DIBKNXAddress *));
+
+	for (int i = 0; i < dibknx->length; i++)
+	{
+		new_table[i] = dibknx->pdata[i];
+	}
+
+	if (new_size != 1) {
+		free(dibknx->pdata);
+	}
+	dibknx->pdata = new_table;
+
+	// Allocate new entry
+	DIBKNXAddress *new_entry = (DIBKNXAddress *)SnortAlloc(sizeof(DIBKNXAddress));
+	dissect((uint8_t *)&new_entry->address, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+
+	// Append new entry
+	dibknx->pdata[new_size-1] = new_entry;
+	dibknx->length = new_size;
+
+	return false;
+}
+
 static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
 	append_dib(p);
@@ -186,6 +214,14 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 		case DIB_IP_CURRENT:
 			break;
 		case DIB_KNX_ADDRESS:
+			if ((dib_entry->structure_length % 2) != 0) {
+				// FIXIT: alert!
+				return true;
+			}
+			for (int i = 0; i < (dib_entry->structure_length - 2); i = i + 2)
+			{
+				append_dib_knxaddress(&dib_entry->knx_address, data, offset);
+			}
 			break;
 		case DIB_MFR_DATA:
 			break;
@@ -206,7 +242,7 @@ void free_knxnetip(KNXnetIPPacket *p)
 	{
 		case SEARCH_REQ:
 		case DESCRIPTION_REQ:
-			for(int i = 0; i < p->body.hpai.length; i++)
+			for (int i = 0; i < p->body.hpai.length; i++)
 			{
 				if (p->body.hpai.pdata[i]) {
 					free(p->body.hpai.pdata[i]);
@@ -219,19 +255,36 @@ void free_knxnetip(KNXnetIPPacket *p)
 			break;
 	}
 
-	/* DIB */
+
+	DIBS *dibs = &p->body.dib;
+
 	switch(p->header.servicetype)
 	{
 
 		case DESCRIPTION_RES:
 
 			/* DIB */
-			for(int i = 0; i < p->body.dib.length; i++)
+			for (int i = 0; i < dibs->length; i++)
 			{
+				/* DIBKNXAddress */
+				if (dibs->pdata[i]->dib_type == DIB_KNX_ADDRESS)
+				{
+					DIBKNXAddressS *dibknx = &dibs->pdata[i]->knx_address;
+					for (int j= 0; j < dibknx->length; j++)
+					{
+						if (dibknx->pdata[j]) {
+							free(dibknx->pdata[j]);
+						}
+					}
+					if (dibknx->pdata) {
+						free(dibknx->pdata);
+					}
+				}
+
 				/* DIBSuppSvc */
 				if (p->body.dib.pdata[i]->dib_type == DIB_SUPP_SVC)
 				{
-					for(int j = 0; j < p->body.dib.pdata[i]->device_service.length; j++)
+					for (int j = 0; j < p->body.dib.pdata[i]->device_service.length; j++)
 					{
 						if (p->body.dib.pdata[i]->device_service.pdata[j]) {
 							free(p->body.dib.pdata[i]->device_service.pdata[j]);

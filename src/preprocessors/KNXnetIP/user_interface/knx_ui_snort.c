@@ -35,7 +35,8 @@ int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config)
 	to->bProgramming = from->bProgramming;
 
 	// FIXIT: full copy of config not supported, as freeing
-	// memory results in multiple free's.
+	// memory results in multiple free's in current implementation of
+	// KNXnetIPCleanExit().
 //	if (from->filename) {
 //		to->filename = from->filename;
 //	}
