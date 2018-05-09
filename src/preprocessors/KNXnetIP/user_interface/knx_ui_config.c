@@ -17,7 +17,7 @@ int knx_ui_append_server_conf(KNXNETIP_CONF *config)
 	//
 	// Allocate pointer table for new KNXNETIP_SERVER_CONF entries
 	//
-	KNXNETIP_SERVER_CONF **new_table = (KNXNETIP_SERVER_CONF**)SnortAlloc((new_size) * sizeof(KNXNETIP_SERVER_CONF));
+	KNXNETIP_SERVER_CONF **new_table = (KNXNETIP_SERVER_CONF**)SnortAlloc((new_size) * sizeof(KNXNETIP_SERVER_CONF *));
 	if (new_table == NULL)
 	{
 		return -1;
@@ -38,7 +38,7 @@ int knx_ui_append_server_conf(KNXNETIP_CONF *config)
 	//
 	// Allocate new KNXNETIP_SERVER_CONF entry
 	//
-	KNXNETIP_SERVER_CONF *new_entry = (KNXNETIP_SERVER_CONF *)SnortAlloc(sizeof(KNXNETIP_SERVER_CONF *));
+	KNXNETIP_SERVER_CONF *new_entry = (KNXNETIP_SERVER_CONF *)SnortAlloc(sizeof(KNXNETIP_SERVER_CONF));
 	if (new_entry == NULL)
 	{
 		return -1;
