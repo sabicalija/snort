@@ -17,6 +17,7 @@
 /*
  * GLOBAL keywords.
  */
+#define KNX_SERVER_IP				"server"
 #define KNX_PROGRAMMING 			"programming"
 #define KNX_PHYSICAL_ADDRESSING 	"physical_address"
 #define NO_PHYSICAL_ADDRESSING		"!physical_address"
@@ -98,8 +99,13 @@ int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *er
 		else if(!strcmp(KNX_GROUP_ADDRESS_FILE, pcToken))
 		{
 			knx_ui_load_filename(config);
+			knx_ui_load_group_address(config);
 		}
 
+		else if(!strcmp(KNX_SERVER_IP, pcToken))
+		{
+
+		}
 		/* Not supported/recognized option */
 		else
 		{
@@ -232,8 +238,12 @@ int KNXnetIPPrintGlobalConf(KNXNETIP_CONF *config)
 int KNXnetIPPrintServerConf(KNXNETIP_CONF *config)
 {
 	uint8_t entry = config->length - 1;
+	KNXNETIP_SERVER_CONF *srvcfg = config->pdata[entry];
+
 	LogMessage("    SERVER_CONFIG\n");
 	KNXnetIPPrintConf(config);
-	LogMessage("      Group Address File:              %s\n", config->pdata[entry]->filename);
+	LogMessage("      Group Address File:              %s\n", srvcfg->filename);
+	knx_ui_print_group_addresses(LogMessage, &srvcfg->group_address);
+
 	return 0;
 }

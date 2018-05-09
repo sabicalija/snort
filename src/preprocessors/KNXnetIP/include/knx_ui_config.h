@@ -31,8 +31,10 @@
  *  configure line.
  */
 #define CONF_SEPARATORS 		" \t\n\r"
+#define CONF_GRPADDR_COMMENT	'#'
 
 #define MAX_FILENAME 			(80)
+#define MAX_LINE				(200)
 
 /*
  * IP Address list delimiters
@@ -67,9 +69,15 @@ typedef struct _KNXNETIP_SRVS {
 	uint16_t **pdata;
 } KNXNETIP_SRVS;
 
+typedef struct _KNXNETIP_GRPADDR {
+	uint8_t main;
+	uint8_t mid;
+	uint16_t sub;
+} KNXNETIP_GRPADDR;
+
 typedef struct _KNXNETIP_GRPADDRS {
 	uint8_t length;
-	uint16_t **pdata;
+	KNXNETIP_GRPADDR **pdata;
 } KNXNETIP_GRPADDRS;
 
 /*
@@ -99,8 +107,13 @@ typedef struct _KNXNETIP_CONF
 	KNXNETIP_SERVER_CONF **pdata;
 } KNXNETIP_CONF;
 
+typedef void (*fprint)(const char *format,...);
+
 int knx_ui_append_server_conf(KNXNETIP_CONF *config);
 int knx_ui_append_conf(KNXNETIP_CONF *config);
 int knx_ui_load_filename(KNXNETIP_CONF *config);
-
+int knx_ui_load_group_address(KNXNETIP_CONF *config);
+int knx_ui_append_group_address(KNXNETIP_SERVER_CONF *srv_config, char *line);
+int knx_ui_process_group_address(KNXNETIP_GRPADDRS *grpaddr, char *line, int start, int end);
+int knx_ui_print_group_addresses(fprint f, KNXNETIP_GRPADDRS *grpaddr);
 #endif /* __KNX_USER_INTERFACE_CONFIG__ */
