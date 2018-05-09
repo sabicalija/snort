@@ -252,6 +252,21 @@ static void KNXnetIPCleanExit(int signal, void *data)
 			free(ipaddr->pdata);
 		}
 
+		// Ports
+		KNXNETIP_PORTS *ports = &pPolicyConfig->pdata[i]->port;
+		for (int j = 0; j < ports->length; j++)
+		{
+			if (ports->pdata[j])
+			{
+				free(ports->pdata[j]);
+			}
+		}
+
+		if (ports->pdata)
+		{
+			free(ports->pdata);
+		}
+
 		// Group Addresses
 		KNXNETIP_GRPADDRS *grpaddr = &pPolicyConfig->pdata[i]->group_address;
 		for (int j = 0; j < grpaddr->length; j++)

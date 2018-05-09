@@ -115,10 +115,13 @@ typedef void (*fprint)(const char *format,...);
 int knx_ui_append_server_conf(KNXNETIP_CONF *config);
 int knx_ui_append_conf(KNXNETIP_CONF *config);
 int knx_ui_load_ip(KNXNETIP_CONF *config);
+int knx_ui_load_ports(KNXNETIP_CONF *config);
+int knx_ui_load_service(KNXNETIP_CONF *config);
 int knx_ui_load_filename(KNXNETIP_CONF *config);
 int knx_ui_load_group_address(KNXNETIP_CONF *config);
 int knx_ui_append_group_address(KNXNETIP_SERVER_CONF *srv_config, char *line);
 int knx_ui_process_group_address(KNXNETIP_GRPADDRS *grpaddr, char *line, int start, int end);
 int knx_ui_print_group_addresses(fprint f, KNXNETIP_GRPADDRS *grpaddr);
 int knx_ui_print_ip_addresses(fprint f, KNXNETIP_IPS *ipaddr);
+int knx_ui_print_ports(fprint f, KNXNETIP_PORTS *ports);
 #endif /* __KNX_USER_INTERFACE_CONFIG__ */

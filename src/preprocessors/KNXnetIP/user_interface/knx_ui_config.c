@@ -117,8 +117,6 @@ int knx_ui_load_ip(KNXNETIP_CONF *config)
 {
 	int ret = 0;
 	char *pIpAddressList = NULL, *pIpAddressListCopy = NULL, *brkt = NULL;
-	uint8_t entry = config->length-1;
-	KNXNETIP_SERVER_CONF *srvcfg = get_last_config_entry(config);
 
 	char *pcToken = strtok(NULL, CONF_SEPARATORS);
 	if(pcToken == NULL)
@@ -169,6 +167,120 @@ cleanup:
 	}
 
 	return ret;
+}
+
+static int append_port(KNXNETIP_PORTS *ports)
+{
+	uint8_t new_size = ports->length + 1;
+
+	// Allocate new pointer table
+	uint16_t **new_table = (uint16_t **)SnortAlloc((new_size) * sizeof(uint16_t *));
+	if (new_table == NULL)
+	{
+		return -1;
+	}
+
+	// Copy current table
+	for (int i = 0; i < ports->length; i++)
+	{
+		new_table[i] = ports->pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1)
+	{
+		if (ports->pdata)
+			free(ports->pdata);
+	}
+	ports->pdata = new_table;
+
+	// Allocate new entry
+	uint16_t *new_entry = (uint16_t *)SnortAlloc(sizeof(uint16_t));
+	if (new_entry == NULL)
+	{
+		return -1;
+	}
+
+	// Append new entry to table
+	ports->pdata[new_size-1] = new_entry;
+	ports->length += 1;
+
+	return 0;
+}
+
+static int knx_ui_load_port(KNXNETIP_CONF *config, char *sPort)
+{
+	KNXNETIP_SERVER_CONF *srvcfg = get_last_config_entry(config);
+	append_port(&srvcfg->port);
+
+	char *result = "";
+	uint16_t conv =	(uint16_t) strtol(sPort, &result, 10);
+
+	uint16_t *port = srvcfg->port.pdata[srvcfg->port.length-1];
+
+	*port = conv;
+	return 0;
+}
+
+int knx_ui_load_ports(KNXNETIP_CONF *config)
+{
+	int ret = 0;
+	char *pPortList = NULL, *pPortListCopy = NULL, *brkt = NULL;
+
+	char *pcToken = strtok(NULL, CONF_SEPARATORS);
+	if(pcToken == NULL)
+	{
+		return -1;
+	}
+
+	/*
+	 * Convert string to port.
+	 */
+	if (strcmp(KNX_START_PORT_LIST, pcToken) == 0)
+	{
+		/* Process port list */
+		if ((pPortList = strtok(NULL, KNX_END_PORT_LIST)) == NULL)
+		{
+			ret = -1;
+			goto cleanup;
+		}
+	}
+	else
+	{
+		/* Process port */
+		pPortList = pcToken;
+	}
+
+	/* Copy port(s) */
+	pPortListCopy = strdup(pPortList);
+	if (pPortListCopy == NULL)
+	{
+		return -1;
+	}
+
+	for (pcToken = strtok_r(pPortList, CONF_SEPARATORS, &brkt);
+		 pcToken;
+		 pcToken = strtok_r(NULL, CONF_SEPARATORS, &brkt))
+	{
+		knx_ui_load_port(config, pcToken);
+	}
+
+	ret = 0;
+
+cleanup:
+	if (pPortListCopy)
+	{
+		free(pPortListCopy);
+	}
+
+	return ret;
+}
+
+int knx_ui_load_service(KNXNETIP_CONF *config)
+{
+
+
+	return 0;
 }
 
 int knx_ui_load_filename(KNXNETIP_CONF *config)
@@ -414,6 +526,50 @@ int knx_ui_print_ip_addresses(fprint f, KNXNETIP_IPS *ipaddr)
 		if (!((i + 1) % items_per_line)) {
 			f("\n");
 			if (i != (ipaddr->length-1))
+			{
+				f("                   ");
+			}
+		}
+	}
+
+	if (items_per_line != 1)
+	{
+		f("\n");
+	}
+	return 0;
+}
+
+int knx_ui_print_ports(fprint f, KNXNETIP_PORTS *ports)
+{
+	int items_per_line = 15;
+
+	if(ports->length > 1)
+	{
+		f("      Port:        ");
+	}
+	else
+	{
+		f("      Ports:       ");
+	}
+
+	for (int i = 0; i < ports->length; i++)
+	{
+		uint16_t *e = ports->pdata[i];
+
+		if (!(i % items_per_line)) {
+			f("                    ");
+		}
+		if (i == (ports->length-1))
+		{
+			f("%d ",*e);
+		}
+		else
+		{
+			f("%d, ",*e);
+		}
+		if (!((i + 1) % items_per_line)) {
+			f("\n");
+			if (i != (ports->length-1))
 			{
 				f("                   ");
 			}

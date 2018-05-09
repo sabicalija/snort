@@ -17,6 +17,8 @@
  * GLOBAL keywords.
  */
 #define KNX_SERVER_IP				"ip"
+#define KNX_SERVER_PORT				"port"
+#define KNX_SERVICE					"service"
 #define KNX_PROGRAMMING 			"programming"
 #define KNX_PHYSICAL_ADDRESSING 	"physical_address"
 #define NO_PHYSICAL_ADDRESSING		"!physical_address"
@@ -105,6 +107,17 @@ int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *er
 		{
 			knx_ui_load_ip(config);
 		}
+
+		else if(!strcmp(KNX_SERVER_PORT, pcToken))
+		{
+			knx_ui_load_ports(config);
+		}
+
+		else if(!strcmp(KNX_SERVICE, pcToken))
+		{
+			knx_ui_load_service(config);
+		}
+
 		/* Not supported/recognized option */
 		else
 		{
@@ -145,6 +158,7 @@ int KNXnetIPPrintServerConf(KNXNETIP_CONF *config)
 	LogMessage("    SERVER_CONFIG\n");
 	KNXnetIPPrintConf(config);
 	knx_ui_print_ip_addresses(LogMessage, &srvcfg->ip);
+	knx_ui_print_ports(LogMessage, &srvcfg->port);
 	LogMessage("      Group Address File:              %s\n", srvcfg->filename);
 	knx_ui_print_group_addresses(LogMessage, &srvcfg->group_address);
 
