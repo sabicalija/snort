@@ -106,8 +106,32 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libhi_ui_a_AR = $(AR) $(ARFLAGS)
 libhi_ui_a_LIBADD =
-am_libhi_ui_a_OBJECTS = hi_ui_config.$(OBJEXT) \
-	hi_ui_server_lookup.$(OBJEXT) hi_ui_iis_unicode_map.$(OBJEXT)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+am_libhi_ui_a_OBJECTS =    \
+    hi_ui_config.$(OBJEXT) \
+	hi_ui_server_lookup.$(OBJEXT) \
+	hi_ui_iis_unicode_map.$(OBJEXT)
+
+
+
+
+
+
+
+
 libhi_ui_a_OBJECTS = $(am_libhi_ui_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -174,6 +198,48 @@ ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
@@ -300,6 +366,8 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+
+
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -310,10 +378,32 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 noinst_LIBRARIES = libhi_ui.a
+
+
+
 libhi_ui_a_SOURCES = \
 hi_ui_config.c \
 hi_ui_server_lookup.c \
 hi_ui_iis_unicode_map.c 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 all: all-am
 
@@ -378,6 +468,42 @@ mostlyclean-libtool:
 clean-libtool:
 	-rm -rf .libs _libs
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
 tags: tags-am
@@ -398,6 +524,19 @@ tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
 	      $$unique; \
 	  fi; \
 	fi
+
+
+
+
+
+
+
+
+
+
+
+
+
 ctags: ctags-am
 
 CTAGS: ctags
@@ -460,6 +599,31 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 check-am: all-am
 check: check-am
 all-am: Makefile $(LIBRARIES)
@@ -468,6 +632,7 @@ install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
+
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
@@ -578,6 +743,7 @@ uninstall-am:
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am
+
 
 .PRECIOUS: Makefile
 

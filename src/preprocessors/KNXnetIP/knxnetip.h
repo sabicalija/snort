@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
-#include "utils/knxutil.h"
+#include "knxutil.h"
 
 #define KNXNETIP_PROTOCOL_VERSION 0x10
 #define KNXNETIP_HEADER_LENGTH 0x06

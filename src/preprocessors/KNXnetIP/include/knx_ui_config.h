@@ -81,7 +81,7 @@ typedef struct _KNXNETIP_GRPADDRS {
 typedef struct _KNXNETIP_SERVER_CONF {
 	bool bProgramming;
 	bool bPhysicalAddressing;
-	char filename[MAX_FILENAME];
+	char *filename;
 	KNXNETIP_IPS ip;
 	KNXNETIP_PORTS port;
 	KNXNETIP_SRVS service;

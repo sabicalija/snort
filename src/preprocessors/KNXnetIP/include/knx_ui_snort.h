@@ -9,9 +9,9 @@
 #ifndef __KNX_USER_INTERFACE_SNORT__
 #define __KNX_USER_INTERFACE_SNORT__
 
+#include "snort.h"
 #include "knx_ui_config.h"
 
-#include "snort.h"
 
 int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config);
 int KNXnetIPInitializeGlobalConfig(KNXNETIP_CONF *config, char *errstr, int errstrlen);

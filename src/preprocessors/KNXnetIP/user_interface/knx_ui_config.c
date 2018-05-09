@@ -61,7 +61,7 @@ int knx_ui_load_filename(KNXNETIP_CONF *config)
 	uint8_t entry = config->length-1;
 	char *pcToken = strtok(NULL, CONF_SEPARATORS);
 
-	// FIXIT: copy string safely
-//	strncpy(config->pdata[entry]->filename, (const char *)pcToken, MAX_FILENAME-20);
+	config->pdata[entry]->filename = pcToken;
+
 	return 0;
 }

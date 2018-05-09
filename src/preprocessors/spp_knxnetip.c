@@ -18,8 +18,8 @@
 
 #include "spp_knxnetip.h"
 #include "knxnetip.h"
-#include "user_interface/knx_ui_config.h"
-#include "user_interface/knx_ui_snort.h"
+#include "knx_ui_config.h"
+#include "knx_ui_snort.h"
 
 //#include "preprocids.h"
 

@@ -13,7 +13,6 @@
 #endif
 
 #include "knx_ui_snort.h"
-#include "knx_ui_config.h"
 
 /*
  * GLOBAL keywords.

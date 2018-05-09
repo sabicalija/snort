@@ -117,7 +117,21 @@ libhttp_inspect_a_DEPENDENCIES = user_interface/hi_ui_config.o \
 	event_output/hi_eo_log.o client/hi_client.o \
 	client/hi_client_norm.o server/hi_server.o \
 	server/hi_server_norm.o normalization/hi_norm.o
+
+
+
 am_libhttp_inspect_a_OBJECTS =
+
+
+
+
+
+
+
+
+
+
+
 libhttp_inspect_a_OBJECTS = $(am_libhttp_inspect_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -158,6 +172,8 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libhttp_inspect_a_SOURCES)
 DIST_SOURCES = $(libhttp_inspect_a_SOURCES)
+
+
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -226,6 +242,7 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
+  
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
@@ -357,6 +374,8 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+
+
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -367,9 +386,13 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 noinst_LIBRARIES = libhttp_inspect.a
-libhttp_inspect_a_SOURCES = 
 SUBDIRS = include utils user_interface session_inspection mode_inspection  \
           anomaly_detection event_output server client normalization files
+
+libhttp_inspect_a_SOURCES = 
+
+
+
 
 libhttp_inspect_a_LIBADD = \
 user_interface/hi_ui_config.o \
@@ -397,6 +420,7 @@ server/hi_server_norm.o \
 normalization/hi_norm.o
 
 all: all-recursive
+
 
 .SUFFIXES:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -449,6 +473,15 @@ mostlyclean-libtool:
 clean-libtool:
 	-rm -rf .libs _libs
 
+
+
+
+
+
+
+
+
+
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
 # To change the values of 'make' variables: instead of editing Makefiles,
@@ -482,6 +515,8 @@ $(am__recursive_targets):
 	if test "$$dot_seen" = "no"; then \
 	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
 	fi; test -z "$$fail"
+
+
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -607,6 +642,7 @@ check-am: all-am
 check: check-recursive
 all-am: Makefile $(LIBRARIES)
 installdirs: installdirs-recursive
+
 installdirs-am:
 install: install-recursive
 install-exec: install-exec-recursive
