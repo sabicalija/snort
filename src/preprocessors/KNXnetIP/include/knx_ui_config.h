@@ -14,6 +14,7 @@
 //#include <sys/socket.h>
 #include <netinet/in.h>
 //#include <netinet/ip.h>
+//#include "knxutil.h"
 
 // DEFINES
 #define KNXNETIP_CONF_KEYWORD 			"knxnetip"
@@ -33,29 +34,29 @@
  *  The definition of the configuration separators in the snort.conf
  *  configure line.
  */
-#define CONF_SEPARATORS 		" \t\n\r"
-#define CONF_GRPADDR_COMMENT	'#'
+#define CONF_SEPARATORS 				" \t\n\r"
+#define CONF_GRPADDR_COMMENT			'#'
 
-#define MAX_FILENAME 			(80)
-#define MAX_LINE				(200)
+#define MAX_FILENAME 					(80)
+#define MAX_LINE						(200)
 
 /*
  * IP Address list delimiters
  */
-#define KNX_START_IPADDR_LIST 	"{"
-#define KNX_END_IPADDR_LIST   	"}"
+#define KNX_START_IPADDR_LIST 			"{"
+#define KNX_END_IPADDR_LIST   			"}"
 
 /*
  * Port list delimiters
  */
-#define KNX_START_PORT_LIST   	"{"
-#define KNX_END_PORT_LIST     	"}"
+#define KNX_START_PORT_LIST   			"{"
+#define KNX_END_PORT_LIST     			"}"
 
 /*
  * Service list delimiters
  */
-#define KNX_START_SVC_LIST    	"{"
-#define KNX_END_SVC_LIST      	"}"
+#define KNX_START_SVC_LIST    			"{"
+#define KNX_END_SVC_LIST      			"}"
 
 typedef struct _KNXNETIP_IPS {
 	uint8_t length;
@@ -116,7 +117,7 @@ int knx_ui_append_server_conf(KNXNETIP_CONF *config);
 int knx_ui_append_conf(KNXNETIP_CONF *config);
 int knx_ui_load_ip(KNXNETIP_CONF *config);
 int knx_ui_load_ports(KNXNETIP_CONF *config);
-int knx_ui_load_service(KNXNETIP_CONF *config);
+int knx_ui_load_services(KNXNETIP_CONF *config);
 int knx_ui_load_filename(KNXNETIP_CONF *config);
 int knx_ui_load_group_address(KNXNETIP_CONF *config);
 int knx_ui_append_group_address(KNXNETIP_SERVER_CONF *srv_config, char *line);
@@ -124,4 +125,5 @@ int knx_ui_process_group_address(KNXNETIP_GRPADDRS *grpaddr, char *line, int sta
 int knx_ui_print_group_addresses(fprint f, KNXNETIP_GRPADDRS *grpaddr);
 int knx_ui_print_ip_addresses(fprint f, KNXNETIP_IPS *ipaddr);
 int knx_ui_print_ports(fprint f, KNXNETIP_PORTS *ports);
+int knx_ui_print_services(fprint f, KNXNETIP_SRVS *services);
 #endif /* __KNX_USER_INTERFACE_CONFIG__ */

@@ -10,6 +10,7 @@
 #include <regex.h>
 #include <string.h>
 #include "util.h"
+#include "knxutil.h"
 
 static KNXNETIP_SERVER_CONF *get_last_config_entry(KNXNETIP_CONF *config)
 {
@@ -276,11 +277,113 @@ cleanup:
 	return ret;
 }
 
-int knx_ui_load_service(KNXNETIP_CONF *config)
+static int append_service(KNXNETIP_SRVS *service)
 {
+	uint8_t new_size = service->length + 1;
 
+	// Allocate new pointer table
+	uint16_t **new_table = (uint16_t **)SnortAlloc((new_size) * sizeof(uint16_t *));
+	if (new_table == NULL)
+	{
+		return -1;
+	}
+
+	// Copy current table
+	for (int i = 0; i < service->length; i++)
+	{
+		new_table[i] = service->pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1)
+	{
+		if (service->pdata)
+			free(service->pdata);
+	}
+	service->pdata = new_table;
+
+	// Allocate new entry to table
+	uint16_t *new_entry = (uint16_t *)SnortAlloc(sizeof(uint16_t));
+	if (new_entry == NULL)
+	{
+		return -1;
+	}
+
+	// Append new entry to table
+	service->pdata[new_size-1] = new_entry;
+	service->length += 1;
 
 	return 0;
+}
+
+static int knx_ui_load_service(KNXNETIP_CONF *config, char *sService)
+{
+	KNXNETIP_SERVER_CONF *srvcfg = get_last_config_entry(config);
+	append_service(&srvcfg->service);
+
+	for (int i = 0; knxnetip_service_identifier[i].value != 0; i++)
+	{
+		if (strcmp(sService, knxnetip_service_identifier[i].text) == 0) {
+			*(srvcfg->service.pdata[srvcfg->service.length-1]) = knxnetip_service_identifier[i].value;
+			break;
+		}
+	}
+
+	return 0;
+}
+
+int knx_ui_load_services(KNXNETIP_CONF *config)
+{
+	int ret = 0;
+	char *pServiceList = NULL, *pServiceListCopy = NULL, *brkt = NULL;
+
+	char *pcToken = strtok(NULL, CONF_SEPARATORS);
+	if(pcToken == NULL)
+	{
+		return -1;
+	}
+
+	/*
+	 * Convert string to port.
+	 */
+	if (strcmp(KNX_START_SVC_LIST, pcToken) == 0)
+	{
+		/* Process service list */
+		if ((pServiceList = strtok(NULL, KNX_END_SVC_LIST)) == NULL)
+		{
+			ret = -1;
+			goto cleanup;
+		}
+	}
+	else
+	{
+		/* Process service */
+		pServiceList = pcToken;
+	}
+
+	/* Copy service(s) */
+	pServiceListCopy = strdup(pServiceList);
+	if (pServiceListCopy == NULL)
+	{
+		return -1;
+	}
+
+	for (pcToken = strtok_r(pServiceList, CONF_SEPARATORS, &brkt);
+		 pcToken;
+		 pcToken = strtok_r(NULL, CONF_SEPARATORS, &brkt))
+	{
+		knx_ui_load_service(config, pcToken);
+	}
+
+	ret = 0;
+
+cleanup:
+	if (pServiceListCopy)
+	{
+		free(pServiceListCopy);
+	}
+
+	return ret;
 }
 
 int knx_ui_load_filename(KNXNETIP_CONF *config)
@@ -467,8 +570,9 @@ int knx_ui_process_group_address(KNXNETIP_GRPADDRS *grpaddr, char *line, int sta
 int knx_ui_print_group_addresses(fprint f, KNXNETIP_GRPADDRS *grpaddr)
 {
 	int items_per_line = 5;
-	f("      Loaded Group Addresses:\n");
-	f("                               ");
+//	f("      Loaded Group Addresses:\n");
+//	f("                               ");
+	f("      Loaded Group Addresses:  ");
 	for (int i = 0; i < grpaddr->length; i++)
 	{
 		KNXNETIP_GRPADDR *e = grpaddr->pdata[i];
@@ -570,6 +674,49 @@ int knx_ui_print_ports(fprint f, KNXNETIP_PORTS *ports)
 		if (!((i + 1) % items_per_line)) {
 			f("\n");
 			if (i != (ports->length-1))
+			{
+				f("                   ");
+			}
+		}
+	}
+
+	if (items_per_line != 1)
+	{
+		f("\n");
+	}
+	return 0;
+}
+
+int knx_ui_print_services(fprint f, KNXNETIP_SRVS *services)
+{
+	int items_per_line = 3;
+
+	if(services->length > 1)
+	{
+		f("      Service:     ");
+	}
+	else
+	{
+		f("      Services:    ");
+	}
+
+	for (int i = 0; i < services->length; i++)
+	{
+		uint16_t *e = services->pdata[i];
+
+		if (!(i % items_per_line)) {
+			f("                    ");
+		}
+
+		for (int j = 0; knxnetip_service_identifier[j].value != 0; j++)
+		{
+			if (knxnetip_service_identifier[j].value == *e)
+				f("%s ",knxnetip_service_identifier[j].text);
+		}
+
+		if (!((i + 1) % items_per_line)) {
+			f("\n");
+			if (i != (services->length-1))
 			{
 				f("                   ");
 			}

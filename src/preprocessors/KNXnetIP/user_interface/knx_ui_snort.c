@@ -34,6 +34,28 @@ int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config)
 	to->bPhysicalAddressing = from->bPhysicalAddressing;
 	to->bProgramming = from->bProgramming;
 
+	// FIXIT: full copy of config not supported, as freeing
+	// memory results in multiple free's.
+//	if (from->filename) {
+//		to->filename = from->filename;
+//	}
+//
+//	if (from->ip.length != 0) {
+//		to->ip = from->ip;
+//	}
+//
+//	if (from->port.length != 0) {
+//		to->port = from->port;
+//	}
+//
+//	if (from->service.length != 0) {
+//		to->service = from->service;
+//	}
+//
+//	if (from->group_address.length != 0) {
+//		to->group_address = from->group_address;
+//	}
+
 	return 0;
 }
 
@@ -115,7 +137,7 @@ int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *er
 
 		else if(!strcmp(KNX_SERVICE, pcToken))
 		{
-			knx_ui_load_service(config);
+			knx_ui_load_services(config);
 		}
 
 		/* Not supported/recognized option */
@@ -134,33 +156,44 @@ int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *er
 	return 0;
 }
 
-static int KNXnetIPPrintConf(KNXNETIP_CONF *config)
+static int KNXnetIPPrintConf(KNXNETIP_SERVER_CONF *s)
 {
-	uint8_t entry = config->length - 1;
-	LogMessage("      Detect device programming:       %s\n", config->pdata[entry]->bProgramming ? "Yes" : "No");
-	LogMessage("      Detect physical addressing:      %s\n", config->pdata[entry]->bPhysicalAddressing ? "Yes" : "No");
+	LogMessage("      Detect device programming:       %s\n", s->bProgramming ? "Yes" : "No");
+	LogMessage("      Detect physical addressing:      %s\n", s->bPhysicalAddressing ? "Yes" : "No");
+
+	if (s->ip.length > 0) {
+		knx_ui_print_ip_addresses(LogMessage, &s->ip);
+	}
+	if (s->port.length > 0) {
+		knx_ui_print_ports(LogMessage, &s->port);
+	}
+	if (s->service.length > 0) {
+		knx_ui_print_services(LogMessage, &s->service);
+	}
+	if (s->filename != NULL) {
+		LogMessage("      Group Address File:              %s\n", s->filename);
+		knx_ui_print_group_addresses(LogMessage, &s->group_address);
+	}
 	return 0;
 }
 
 int KNXnetIPPrintGlobalConf(KNXNETIP_CONF *config)
 {
+	uint8_t entry = config->length - 1;
+	KNXNETIP_SERVER_CONF *s = config->pdata[entry];
+
 	LogMessage("KNXnet/IP Config:\n");
 	LogMessage("  GLOBAL_CONFIG\n");
-	KNXnetIPPrintConf(config);
+	KNXnetIPPrintConf(s);
 	return 0;
 }
 
 int KNXnetIPPrintServerConf(KNXNETIP_CONF *config)
 {
 	uint8_t entry = config->length - 1;
-	KNXNETIP_SERVER_CONF *srvcfg = config->pdata[entry];
+	KNXNETIP_SERVER_CONF *s = config->pdata[entry];
 
 	LogMessage("    SERVER_CONFIG\n");
-	KNXnetIPPrintConf(config);
-	knx_ui_print_ip_addresses(LogMessage, &srvcfg->ip);
-	knx_ui_print_ports(LogMessage, &srvcfg->port);
-	LogMessage("      Group Address File:              %s\n", srvcfg->filename);
-	knx_ui_print_group_addresses(LogMessage, &srvcfg->group_address);
-
+	KNXnetIPPrintConf(s);
 	return 0;
 }
