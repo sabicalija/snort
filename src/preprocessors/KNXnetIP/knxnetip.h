@@ -30,6 +30,17 @@ typedef struct _HPAIS {
 	HPAI    **pdata;
 } HPAIS;
 
+typedef struct _ConnectionHeader {
+	uint8_t structure_length;
+	uint8_t communication_channel_id;
+	uint8_t sequence_counter;
+	union {
+		uint8_t reserved;
+		uint8_t confackstat;
+		uint8_t tunnackstat;
+	};
+} ConnectionHeader;
+
 typedef struct _DIBDeviceInfo {
 	uint8_t knx_medium;
 	// FIXIT: Detect Programming Mode
@@ -133,19 +144,12 @@ typedef struct _KNXnetIPHeader
 
 typedef struct _KNXnetIPBody
 {
-	// FIXIT: No reference/description in KNX
-	//
-	// Specification
-	//   - communication_channel_id
-	//   - connection_status
-	//   - reserved
-	//   - connectionstate_status
-	//
 	uint8_t communication_channel_id;
 	uint8_t connection_status;
 	uint8_t reserved;
 	uint8_t connectionstate_status;
 	HPAIS hpai;
+	ConnectionHeader conn_header;
 	union {
 		DIBS dib;
 		CRIS cri;

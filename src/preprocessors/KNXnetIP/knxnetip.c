@@ -83,6 +83,9 @@ static boolean dissect_hpai(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	return false;
 }
 
+/*
+ * Dissect Description Information Block (DIB) structure.
+ */
 static boolean append_dib(KNXnetIPPacket *p)
 {
 	uint8_t new_size = p->body.dib.length + 1;
@@ -118,11 +121,13 @@ static boolean append_dib_knxaddress(DIBKNXAddressS *dibknx, const uint8_t *data
 	// Allocate new table
 	DIBKNXAddress **new_table = (DIBKNXAddress **)SnortAlloc((new_size) * sizeof(DIBKNXAddress *));
 
+	// Copy current table
 	for (int i = 0; i < dibknx->length; i++)
 	{
 		new_table[i] = dibknx->pdata[i];
 	}
 
+	// Replace old/new table
 	if (new_size != 1) {
 		free(dibknx->pdata);
 	}
@@ -132,7 +137,7 @@ static boolean append_dib_knxaddress(DIBKNXAddressS *dibknx, const uint8_t *data
 	DIBKNXAddress *new_entry = (DIBKNXAddress *)SnortAlloc(sizeof(DIBKNXAddress));
 	dissect((uint8_t *)&new_entry->address, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
 
-	// Append new entry
+	// Append new entry to table
 	dibknx->pdata[new_size-1] = new_entry;
 	dibknx->length = new_size;
 
@@ -156,26 +161,25 @@ static boolean append_dib_svc(KNXnetIPPacket *p)
 	uint8_t entry = p->body.dib.length - 1;
 	uint8_t new_size = p->body.dib.pdata[entry]->device_service.length + 1;
 
-	// Allocate larger array for new DIBSuppSvcFamily entry
-	DIBSuppSvcFamily **new_data = (DIBSuppSvcFamily **)SnortAlloc((new_size) * sizeof(DIBSuppSvcFamily*));
+	// Allocate new table
+	DIBSuppSvcFamily **new_table = (DIBSuppSvcFamily **)SnortAlloc((new_size) * sizeof(DIBSuppSvcFamily *));
 
-//	memset(new_data, 0, (new_size) * sizeof(DIBSuppSvcFamily*));
-
-	// Copy current DIBSuppSvcFamily pointer in new array
+	// Copy current table
 	for (int i = 0; i < p->body.dib.pdata[entry]->device_service.length; i++)
 	{
-		new_data[i] = p->body.dib.pdata[entry]->device_service.pdata[i];
+		new_table[i] = p->body.dib.pdata[entry]->device_service.pdata[i];
 	}
 
+	// Replace old/new table
 	if (new_size != 1) {
 		free(p->body.dib.pdata[entry]->device_service.pdata);
 	}
-	p->body.dib.pdata[entry]->device_service.pdata = new_data;
+	p->body.dib.pdata[entry]->device_service.pdata = new_table;
 
-	// Allocate new DIBSuppSvcFamily entry
+	// Allocate new entry
 	DIBSuppSvcFamily *new_entry = (DIBSuppSvcFamily *)SnortAlloc(sizeof(DIBSuppSvcFamily));
 
-	// Append new entry
+	// Append new entry to table
 	p->body.dib.pdata[entry]->device_service.pdata[new_size-1] = new_entry;
 	p->body.dib.pdata[entry]->device_service.length = new_size;
 
@@ -271,7 +275,9 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	return false;
 }
 
-
+/*
+ * Dissect Connection Request Information (CRI) structure.
+ */
 static boolean append_cri(KNXnetIPPacket *p)
 {
 	uint8_t new_size = p->body.cri.length + 1;
@@ -300,7 +306,6 @@ static boolean append_cri(KNXnetIPPacket *p)
 
 	return false;
 }
-
 static boolean dissect_cri(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
 	append_cri(p);
@@ -320,6 +325,9 @@ static boolean dissect_cri(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	return false;
 }
 
+/*
+ * Dissect Connection Response Data Block (CRD) structure.
+ */
 static boolean append_crd(KNXnetIPPacket *p)
 {
 	uint8_t new_size = p->body.crd.length + 1;
@@ -348,7 +356,6 @@ static boolean append_crd(KNXnetIPPacket *p)
 
 	return false;
 }
-
 static boolean dissect_crd(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
 	append_crd(p);
@@ -373,6 +380,25 @@ static boolean dissect_crd(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	{
 		return true;
 	}
+
+	return false;
+}
+
+/*
+ * Dissect Connection Header structure.
+ */
+static boolean dissect_conn_header(KNXnetIPPacket *p, const uint8_t *data, int *offset)
+{
+	dissect((uint8_t *)&p->body.conn_header.structure_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&p->body.conn_header.communication_channel_id, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&p->body.conn_header.sequence_counter, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	return false;
+}
+
+
+static boolean dissect_cemi(KNXnetIPPacket *p, const uint8_t *data, int *offset)
+{
+
 
 	return false;
 }
@@ -555,13 +581,20 @@ void dissect_knxnetip(const uint8_t *data)
 			break;
 
 		case DEVICE_CONFIGURATION_ACK:
+			dissect_conn_header(&knx, data, &offset);
+			dissect((uint8_t *)&knx.body.conn_header.confackstat, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
 
 		case DEVICE_CONFIGURATION_REQ:
 		case TUNNELLING_REQ:
+			dissect_conn_header(&knx, data, &offset);
+			dissect((uint8_t *)&knx.body.conn_header.reserved, data, &offset, sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+			dissect_cemi(&knx, data, &offset);
 			break;
 
 		case TUNNELLING_ACK:
+			dissect_conn_header(&knx, data, &offset);
+			dissect((uint8_t *)&knx.body.conn_header.tunnackstat, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
 
 		case ROUTING_INDICATION:
@@ -577,6 +610,9 @@ void dissect_knxnetip(const uint8_t *data)
 			break;
 
 		case REMOTE_DIAG_RES:
+			break;
+
+		case REMOTE_BASIC_CONF_REQ:
 			break;
 
 		case REMOTE_RESET_REQ:
