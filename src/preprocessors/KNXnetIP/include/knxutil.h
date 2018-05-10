@@ -13,43 +13,52 @@ typedef struct _value_string {
     const char *text;
 } value_string;
 
-#define SEARCH_REQ 0x0201
-#define SEARCH_RES 0x0202
-#define DESCRIPTION_REQ 0x0203
-#define DESCRIPTION_RES 0x0204
-#define CONNECT_REQ 0x0205
-#define CONNECT_RES 0x0206
-#define CONNECTIONSTATE_REQ 0x0207
-#define CONNECTIONSTATE_RES 0x0208
-#define DISCONNECT_REQ 0x0209
-#define DISCONNECT_RES 0x020A
-#define DEVICE_CONFIGURATION_REQ 0x0310
-#define DEVICE_CONFIGURATION_ACK 0x0311
-#define TUNNELLING_REQ 0x0420
-#define TUNNELLING_ACK 0x0421
-#define ROUTING_INDICATION 0x0530
-#define ROUTING_LOST 0x0531
-#define ROUTING_BUSY 0x0532
-#define REMOTE_DIAG_REQ 0x0740
-#define REMOTE_DIAG_RES 0x0741
-#define REMOTE_BASIC_CONF_REQ 0x0742
-#define REMOTE_RESET_REQ 0x0743
-#define DIB_DEVICE_INFO 0x01
-#define DIB_SUPP_SVC 0x02
-#define DIB_IP_CONF 0x03
-#define DIB_IP_CURRENT 0x04
-#define DIB_KNX_ADDRESS 0x05
-#define DIB_MFR_DATA 0xFE
-#define KNX_TUNNEL_CONNECTION 0x04
-#define FLAGS_DEVICESTATUS_RESERVED 0xFE
-#define FLAGS_DEVICESTATUS_PROGRAM 0x01
-#define FLAGS_IPCAPABILITES_RESERVED 0xF8
-#define FLAGS_IPCAPABILITES_BOOTIP 0x01
-#define FLAGS_IPCAPABILITES_DHCP 0x02
-#define FLAGS_IPCAPABILITES_AUTOIP 0x04
-#define FLAGS_DEVICESTATE_RESERVED 0xFC
-#define FLAGS_DEVICESTATE_KNX 0x01
-#define FLAGS_DEVICESTATE_IP 0x02
+/* Common constants */
+#define KNXNETIP_VERSION_10 		    (0x10)
+#define HEADER_SIZE_10                  (0x06)
+
+/* Core Service Type Identifiers */
+#define SEARCH_REQ 				        (0x0201)
+#define SEARCH_RES                      (0x0202)
+#define DESCRIPTION_REQ                 (0x0203)
+#define DESCRIPTION_RES                 (0x0204)
+#define CONNECT_REQ                     (0x0205)
+#define CONNECT_RES                     (0x0206)
+#define CONNECTIONSTATE_REQ             (0x0207)
+#define CONNECTIONSTATE_RES             (0x0208)
+#define DISCONNECT_REQ                  (0x0209)
+#define DISCONNECT_RES                  (0x020A)
+/* Device Management Service Type Identifiers */
+#define DEVICE_CONFIGURATION_REQ        (0x0310)
+#define DEVICE_CONFIGURATION_ACK        (0x0311)
+/* TUnneling Service Type Identifiers */
+#define TUNNELLING_REQ                  (0x0420)
+#define TUNNELLING_ACK                  (0x0421)
+/* Routing Service Type Identifiers */
+#define ROUTING_INDICATION              (0x0530)
+#define ROUTING_LOST                    (0x0531)
+
+#define ROUTING_BUSY                    (0x0532)
+#define REMOTE_DIAG_REQ                 (0x0740)
+#define REMOTE_DIAG_RES                 (0x0741)
+#define REMOTE_BASIC_CONF_REQ           (0x0742)
+#define REMOTE_RESET_REQ                (0x0743)
+#define DIB_DEVICE_INFO                 (0x01)
+#define DIB_SUPP_SVC                    (0x02)
+#define DIB_IP_CONF                     (0x03)
+#define DIB_IP_CURRENT                  (0x04)
+#define DIB_KNX_ADDRESS                 (0x05)
+#define DIB_MFR_DATA                    (0xFE)
+#define KNX_TUNNEL_CONNECTION           (0x04)
+#define FLAGS_DEVICESTATUS_RESERVED     (0xFE)
+#define FLAGS_DEVICESTATUS_PROGRAM      (0x01)
+#define FLAGS_IPCAPABILITES_RESERVED    (0xF8)
+#define FLAGS_IPCAPABILITES_BOOTIP      (0x01)
+#define FLAGS_IPCAPABILITES_DHCP        (0x02)
+#define FLAGS_IPCAPABILITES_AUTOIP      (0x04)
+#define FLAGS_DEVICESTATE_RESERVED      (0xFC)
+#define FLAGS_DEVICESTATE_KNX           (0x01)
+#define FLAGS_DEVICESTATE_IP            (0x02)
 /*for CEMI*/
 #define RAW_REQ 0x10
 #define DATA_REQ 0x11
@@ -208,7 +217,7 @@ static const value_string knxnetip_host_protocol_codes[] = {
 };
 
 static const value_string knxnetip_ip_assignment_method[] = {
-    { 0x01, "manuell" },
+    { 0x01, "manual" },
     { 0x02, "BootP" },
     { 0x04, "DHCP" },
     { 0x08, "AutoIP" },

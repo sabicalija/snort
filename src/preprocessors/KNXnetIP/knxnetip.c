@@ -175,6 +175,20 @@ static boolean append_dib_knxaddress(DIBKNXAddressS *dibknx, const uint8_t *data
 	return false;
 }
 
+static boolean append_dib_mfr_data(DIB* dib, const uint8_t *data, int *offset)
+{
+	// Allocate buffer
+	uint8_t size = dib->structure_length - 4;
+	char *man_data = (char *)SnortAlloc(size * sizeof(char));
+
+	dissect((uint8_t *)man_data, data, offset, size* sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+
+	// Store reference
+	dib->mfr_data.manufacturer_data = man_data;
+
+	return false;
+}
+
 static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
 	append_dib(p);
@@ -210,9 +224,21 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 			break;
 
 		case DIB_IP_CONF:
+			dissect((uint8_t *)&dib_entry->ip_config.ip, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_config.subnet, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_config.gateway, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_config.capabilities, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_config.assignment_method, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
+
 		case DIB_IP_CURRENT:
+			dissect((uint8_t *)&dib_entry->ip_current.ip, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_current.subnet, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_current.gateway, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_current.dhcp, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&dib_entry->ip_current.assignment_method, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
 			break;
+
 		case DIB_KNX_ADDRESS:
 			if ((dib_entry->structure_length % 2) != 0) {
 				// FIXIT: alert!
@@ -223,7 +249,10 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 				append_dib_knxaddress(&dib_entry->knx_address, data, offset);
 			}
 			break;
+
 		case DIB_MFR_DATA:
+			dissect((uint8_t *)&dib_entry->mfr_data.manufacturer_id, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+			append_dib_mfr_data(dib_entry, data, offset);
 			break;
 
 		/* Malformed/Malicious packet */
@@ -278,6 +307,15 @@ void free_knxnetip(KNXnetIPPacket *p)
 					}
 					if (dibknx->pdata) {
 						free(dibknx->pdata);
+					}
+				}
+
+				/* DIBMFRData */
+				if (dibs->pdata[i]->dib_type == DIB_MFR_DATA)
+				{
+					DIBMFRData *dibmfr = &dibs->pdata[i]->mfr_data;
+					if (dibmfr->manufacturer_data) {
+						free(dibmfr->manufacturer_data);
 					}
 				}
 

@@ -30,6 +30,8 @@ typedef struct _HPAIS {
 
 typedef struct _DIBDeviceInfo {
 	uint8_t knx_medium;
+	// FIXIT: Detect Programming Mode
+	//        Indicator: KNXnet/IP Core (p. 25)
 	uint8_t device_status;
 	uint16_t knx_individual_address;
 	uint16_t project_inst_id;
@@ -71,7 +73,8 @@ typedef struct _DIBKNXAddressS {
 } DIBKNXAddressS;
 
 typedef struct _DIBMFRData {
-
+	uint16_t manufacturer_id;
+	char *manufacturer_data;
 } DIBMFRData;
 
 typedef struct _DIBSuppSvc {
