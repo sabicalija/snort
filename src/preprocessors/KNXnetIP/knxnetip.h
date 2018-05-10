@@ -17,8 +17,10 @@
 #define KNXNETIP_HEADER_LENGTH 0x06
 
 typedef struct _HPAI {
-	uint8_t length;
+	uint8_t structure_length;
 	uint8_t host_protocol;
+	// FIXIT: Host Protocol dependent data (e.g. ip, port)
+	// of variable length.
 	uint32_t ip;
 	uint16_t port;
 } HPAI;
@@ -40,12 +42,10 @@ typedef struct _DIBDeviceInfo {
 	uint8_t mac_address[6];
 	char device_friendly_name[30];
 } DIBDeviceInfo;
-
 typedef struct _DIBSuppSvcFamily {
 	uint8_t id;
 	uint8_t version;
 } DIBSuppSvcFamily;
-
 typedef struct _DIBIPConfig {
 	uint32_t ip;
 	uint32_t subnet;
@@ -53,7 +53,6 @@ typedef struct _DIBIPConfig {
 	uint8_t capabilities;
 	uint8_t assignment_method;
 } DIBIPConfig;
-
 typedef struct _DIBIPCurrent {
 	uint32_t ip;
 	uint32_t subnet;
@@ -62,21 +61,17 @@ typedef struct _DIBIPCurrent {
 	uint8_t assignment_method;
 	uint8_t reserved;
 } DIBIPCurrent;
-
 typedef struct _DIBKNXAddress {
 	uint16_t address;
 } DIBKNXAddress;
-
 typedef struct _DIBKNXAddressS {
 	uint8_t length;
 	DIBKNXAddress **pdata;
 } DIBKNXAddressS;
-
 typedef struct _DIBMFRData {
 	uint16_t manufacturer_id;
 	char *manufacturer_data;
 } DIBMFRData;
-
 typedef struct _DIBSuppSvc {
 	uint8_t length;
 	DIBSuppSvcFamily **pdata;
@@ -94,19 +89,35 @@ typedef struct _DIB {
 		DIBMFRData mfr_data;
 	};
 } DIB;
-
 typedef struct _DIBS {
 	uint8_t length;
 	DIB **pdata;
 } DIBS;
 
 typedef struct _CRI {
-
+	uint8_t structure_length;
+	uint8_t connection_type;
+	// FIXIT: Host Protocol dependent data (e.g. knxlayer, res)
+	// of variable length.
+	uint8_t knxlayer;
+	uint8_t reserved;
 } CRI;
 
-typedef struct _CRD {
+typedef struct _CRIS {
+	uint8_t length;
+	CRI **pdata;
+} CRIS;
 
+typedef struct _CRD {
+	uint8_t structure_length;
+	uint8_t connection_type;
+	uint16_t knxaddress;
 } CRD;
+
+typedef struct _CRDS {
+	uint8_t length;
+	CRD **pdata;
+} CRDS;
 
 typedef struct _cEMI {
 
@@ -122,11 +133,18 @@ typedef struct _KNXnetIPHeader
 
 typedef struct _KNXnetIPBody
 {
+	// FIXIT: No reference/description in KNX
+	// Specification
+	//   - communication_channel_id
+	//   - connection_status
+	//
+	uint8_t communication_channel_id;
+	uint8_t connection_status;
 	HPAIS hpai;
 	union {
 		DIBS dib;
-		CRI cri;
-		CRD crd;
+		CRIS cri;
+		CRDS crd;
 	};
 } KNXnetIPBody;
 

@@ -40,26 +40,25 @@ static boolean append_hpai(KNXnetIPPacket *p)
 {
 	uint8_t new_size = p->body.hpai.length + 1;
 
-	// Allocate larger array for new DIB entry
-	HPAI **new_data = (HPAI**)SnortAlloc((new_size) * sizeof(HPAI));
+	// Allocate new table
+	HPAI **new_table = (HPAI**)SnortAlloc((new_size) * sizeof(HPAI *));
 
-//	memset(new_data, 0, (new_size) * sizeof(HPAI));
-
-	// Copy current HPAI pointer in new array
+	// Copy current table
 	for (int i = 0; i < p->body.hpai.length; i++)
 	{
-		new_data[i] = p->body.hpai.pdata[i];
+		new_table[i] = p->body.hpai.pdata[i];
 	}
 
+	// Replace old/new table
 	if (new_size != 1) {
 		free(p->body.hpai.pdata);
 	}
-	p->body.hpai.pdata = new_data;
+	p->body.hpai.pdata = new_table;
 
-	// Allocate new DIB entry
+	// Allocate new entry
 	HPAI *new_entry = (HPAI *)SnortAlloc(sizeof(HPAI));
 
-	// Append new entry
+	// Append new entry to table
 	p->body.hpai.pdata[new_size-1] = new_entry;
 	p->body.hpai.length = new_size;
 
@@ -72,10 +71,14 @@ static boolean dissect_hpai(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	uint8_t entry = p->body.hpai.length - 1;
 	HPAI *hpai_entry = p->body.hpai.pdata[entry];
 
-	dissect((uint8_t *)&hpai_entry->length, data, offset, sizeof(uint8_t),  ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&hpai_entry->structure_length, data, offset, sizeof(uint8_t),  ENC_BIG_ENDIAN);
 	dissect((uint8_t *)&hpai_entry->host_protocol, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 	dissect((uint8_t *)&hpai_entry->ip,     data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
 	dissect((uint8_t *)&hpai_entry->port,   data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+
+	// FIXIT: Host Protocol dependent data of variable length
+	if (hpai_entry->structure_length != 8)
+		return true;
 
 	return false;
 }
@@ -84,26 +87,25 @@ static boolean append_dib(KNXnetIPPacket *p)
 {
 	uint8_t new_size = p->body.dib.length + 1;
 
-	// Allocate larger array for new DIB entry
-	DIB **new_data = (DIB **)SnortAlloc((new_size) * sizeof(DIB*));
+	// Allocate new table
+	DIB **new_table = (DIB **)SnortAlloc((new_size) * sizeof(DIB *));
 
-//	memset(new_data, 0, (new_size) * sizeof(DIB*));
-
-	// Copy current DIB pointer in new array
+	// Copy current table
 	for (int i = 0; i < p->body.dib.length; i++)
 	{
-		new_data[i] = p->body.dib.pdata[i];
+		new_table[i] = p->body.dib.pdata[i];
 	}
 
+	// Replace old/new table
 	if (new_size != 1) {
 		free(p->body.dib.pdata);
 	}
-	p->body.dib.pdata = new_data;
+	p->body.dib.pdata = new_table;
 
-	// Allocate new DIB entry
+	// Allocate new entry
 	DIB *new_entry = (DIB *)SnortAlloc(sizeof(DIB));
 
-	// Append new entry
+	// Append new entry to table
 	p->body.dib.pdata[new_size-1] = new_entry;
 	p->body.dib.length = new_size;
 
@@ -266,6 +268,112 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	return false;
 }
 
+
+static boolean append_cri(KNXnetIPPacket *p)
+{
+	uint8_t new_size = p->body.cri.length + 1;
+
+	// Allocate new table
+	CRI **new_table = (CRI **)SnortAlloc((new_size) * sizeof(CRI *));
+
+	// Copy current table
+	for (int i = 0; i < p->body.cri.length; i++)
+	{
+		new_table[i] = p->body.cri.pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1) {
+		free(p->body.cri.pdata);
+	}
+	p->body.cri.pdata = new_table;
+
+	// Allocate new entry
+	CRI *new_entry = (CRI *)SnortAlloc(sizeof(CRI));
+
+	// Append new entry to table
+	p->body.cri.pdata[new_size-1] = new_entry;
+	p->body.cri.length = new_size;
+
+	return false;
+}
+
+static boolean dissect_cri(KNXnetIPPacket *p, const uint8_t *data, int *offset)
+{
+	append_cri(p);
+
+	uint8_t entry = p->body.cri.length - 1;
+	CRI *cri_entry = p->body.cri.pdata[entry];
+
+	dissect((uint8_t *)&cri_entry->structure_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&cri_entry->connection_type, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&cri_entry->knxlayer, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&cri_entry->reserved, data, offset, sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+
+	// FIXIT: Host Protocol (in)dependent data of variable length
+	if (cri_entry->structure_length != 4)
+		return true;
+
+	return false;
+}
+
+static boolean append_crd(KNXnetIPPacket *p)
+{
+	uint8_t new_size = p->body.crd.length + 1;
+
+	// Allocate new table
+	CRD **new_table = (CRD **)SnortAlloc((new_size) * sizeof(CRD *));
+
+	// Copy current table
+	for (int i = 0; i < p->body.crd.length; i++)
+	{
+		new_table[i] = p->body.crd.pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1) {
+		free(p->body.crd.pdata);
+	}
+	p->body.crd.pdata = new_table;
+
+	// Allocate new entry
+	CRD *new_entry = (CRD *)SnortAlloc(sizeof(CRD));
+
+	// Append new entry to table
+	p->body.crd.pdata[new_size-1] = new_entry;
+	p->body.crd.length = new_size;
+
+	return false;
+}
+
+static boolean dissect_crd(KNXnetIPPacket *p, const uint8_t *data, int *offset)
+{
+	append_crd(p);
+
+	uint8_t entry = p->body.crd.length - 1;
+	CRD *crd_entry = p->body.crd.pdata[entry];
+
+	dissect((uint8_t *)&crd_entry->structure_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&crd_entry->connection_type, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+	// FIXIT: Host Protocol (in)dependent data of variable length
+	if (crd_entry->structure_length != 4)
+		return true;
+
+	if (crd_entry->connection_type == KNX_TUNNEL_CONNECTION)
+	{
+		dissect((uint8_t *)&crd_entry->knxaddress, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+	}
+
+	// FIXIT: Implement other connection types (if necessary).
+	else
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void free_knxnetip(KNXnetIPPacket *p)
 {
 	/* HPAI */
@@ -274,6 +382,8 @@ void free_knxnetip(KNXnetIPPacket *p)
 		case SEARCH_REQ:
 		case SEARCH_RES:
 		case DESCRIPTION_REQ:
+		case CONNECT_REQ:
+		case CONNECT_RES:
 			for (int i = 0; i < p->body.hpai.length; i++)
 			{
 				if (p->body.hpai.pdata[i]) {
@@ -287,11 +397,37 @@ void free_knxnetip(KNXnetIPPacket *p)
 			break;
 	}
 
-
+	CRIS *cris = &p->body.cri;
+	CRDS *crds = &p->body.crd;
 	DIBS *dibs = &p->body.dib;
 
 	switch(p->header.servicetype)
 	{
+		case CONNECT_REQ:
+
+			/* CRI */
+			for (int i = 0; i < cris->length; i++)
+			{
+				if(cris->pdata[i])
+					free(cris->pdata[i]);
+			}
+
+			if (cris->pdata)
+				free(cris->pdata);
+			break;
+
+		case CONNECT_RES:
+
+			/* CRD */
+			for (int i = 0; i < crds->length; i++)
+			{
+				if(crds->pdata[i])
+					free(crds->pdata[i]);
+			}
+
+			if (crds->pdata)
+				free(crds->pdata);
+			break;
 
 		case SEARCH_RES:
 		case DESCRIPTION_RES:
@@ -388,9 +524,16 @@ void dissect_knxnetip(const uint8_t *data)
 			break;
 
 		case CONNECT_REQ:
+			dissect_hpai(&knx, data, &offset);
+			dissect_hpai(&knx, data, &offset);
+			dissect_cri(&knx, data, &offset);
 			break;
 
 		case CONNECT_RES:
+			dissect((uint8_t *)&knx.body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&knx.body.connection_status, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect_hpai(&knx, data, &offset);
+			dissect_crd(&knx, data, &offset);
 			break;
 
 		case CONNECTIONSTATE_REQ:
