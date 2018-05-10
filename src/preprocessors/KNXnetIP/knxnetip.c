@@ -36,7 +36,7 @@ static void dissect(uint8_t *dest, const uint8_t *src, int *offset, int size, in
 /*
  * Dissect Host Protocol Address Information (HPAI) structure.
  */
-static void append_hpai(KNXnetIPPacket *p)
+static boolean append_hpai(KNXnetIPPacket *p)
 {
 	uint8_t new_size = p->body.hpai.length + 1;
 
@@ -63,9 +63,9 @@ static void append_hpai(KNXnetIPPacket *p)
 	p->body.hpai.pdata[new_size-1] = new_entry;
 	p->body.hpai.length = new_size;
 
+	return false;
 }
-
-static void dissect_hpai(KNXnetIPPacket *p, const uint8_t *data, int *offset)
+static boolean dissect_hpai(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
 	append_hpai(p);
 
@@ -76,49 +76,11 @@ static void dissect_hpai(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	dissect((uint8_t *)&hpai_entry->host_protocol, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 	dissect((uint8_t *)&hpai_entry->ip,     data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
 	dissect((uint8_t *)&hpai_entry->port,   data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+
+	return false;
 }
 
-static void append_dib_svc(KNXnetIPPacket *p)
-{
-	uint8_t entry = p->body.dib.length - 1;
-	uint8_t new_size = p->body.dib.pdata[entry]->device_service.length + 1;
-
-	// Allocate larger array for new DIBSuppSvcFamily entry
-	DIBSuppSvcFamily **new_data = (DIBSuppSvcFamily **)SnortAlloc((new_size) * sizeof(DIBSuppSvcFamily*));
-
-//	memset(new_data, 0, (new_size) * sizeof(DIBSuppSvcFamily*));
-
-	// Copy current DIBSuppSvcFamily pointer in new array
-	for (int i = 0; i < p->body.dib.pdata[entry]->device_service.length; i++)
-	{
-		new_data[i] = p->body.dib.pdata[entry]->device_service.pdata[i];
-	}
-
-	if (new_size != 1) {
-		free(p->body.dib.pdata[entry]->device_service.pdata);
-	}
-	p->body.dib.pdata[entry]->device_service.pdata = new_data;
-
-	// Allocate new DIBSuppSvcFamily entry
-	DIBSuppSvcFamily *new_entry = (DIBSuppSvcFamily *)SnortAlloc(sizeof(DIBSuppSvcFamily));
-
-	// Append new entry
-	p->body.dib.pdata[entry]->device_service.pdata[new_size-1] = new_entry;
-	p->body.dib.pdata[entry]->device_service.length = new_size;
-}
-
-static void dissect_dib_svc(KNXnetIPPacket *p, const uint8_t *data, int *offset)
-{
-	append_dib_svc(p);
-
-	uint8_t entry = p->body.dib.pdata[p->body.dib.length-1]->device_service.length - 1;
-	DIBSuppSvcFamily *dib_svc_fam = p->body.dib.pdata[p->body.dib.length-1]->device_service.pdata[entry];
-
-	dissect((uint8_t *)&dib_svc_fam->id, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-	dissect((uint8_t *)&dib_svc_fam->version, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-}
-
-static void append_dib(KNXnetIPPacket *p)
+static boolean append_dib(KNXnetIPPacket *p)
 {
 	uint8_t new_size = p->body.dib.length + 1;
 
@@ -145,8 +107,8 @@ static void append_dib(KNXnetIPPacket *p)
 	p->body.dib.pdata[new_size-1] = new_entry;
 	p->body.dib.length = new_size;
 
+	return false;
 }
-
 static boolean append_dib_knxaddress(DIBKNXAddressS *dibknx, const uint8_t *data, int *offset)
 {
 	uint8_t new_size = dibknx->length + 1;
@@ -174,7 +136,6 @@ static boolean append_dib_knxaddress(DIBKNXAddressS *dibknx, const uint8_t *data
 
 	return false;
 }
-
 static boolean append_dib_mfr_data(DIB* dib, const uint8_t *data, int *offset)
 {
 	// Allocate buffer
@@ -188,7 +149,48 @@ static boolean append_dib_mfr_data(DIB* dib, const uint8_t *data, int *offset)
 
 	return false;
 }
+static boolean append_dib_svc(KNXnetIPPacket *p)
+{
+	uint8_t entry = p->body.dib.length - 1;
+	uint8_t new_size = p->body.dib.pdata[entry]->device_service.length + 1;
 
+	// Allocate larger array for new DIBSuppSvcFamily entry
+	DIBSuppSvcFamily **new_data = (DIBSuppSvcFamily **)SnortAlloc((new_size) * sizeof(DIBSuppSvcFamily*));
+
+//	memset(new_data, 0, (new_size) * sizeof(DIBSuppSvcFamily*));
+
+	// Copy current DIBSuppSvcFamily pointer in new array
+	for (int i = 0; i < p->body.dib.pdata[entry]->device_service.length; i++)
+	{
+		new_data[i] = p->body.dib.pdata[entry]->device_service.pdata[i];
+	}
+
+	if (new_size != 1) {
+		free(p->body.dib.pdata[entry]->device_service.pdata);
+	}
+	p->body.dib.pdata[entry]->device_service.pdata = new_data;
+
+	// Allocate new DIBSuppSvcFamily entry
+	DIBSuppSvcFamily *new_entry = (DIBSuppSvcFamily *)SnortAlloc(sizeof(DIBSuppSvcFamily));
+
+	// Append new entry
+	p->body.dib.pdata[entry]->device_service.pdata[new_size-1] = new_entry;
+	p->body.dib.pdata[entry]->device_service.length = new_size;
+
+	return false;
+}
+static boolean dissect_dib_svc(KNXnetIPPacket *p, const uint8_t *data, int *offset)
+{
+	append_dib_svc(p);
+
+	uint8_t entry = p->body.dib.pdata[p->body.dib.length-1]->device_service.length - 1;
+	DIBSuppSvcFamily *dib_svc_fam = p->body.dib.pdata[p->body.dib.length-1]->device_service.pdata[entry];
+
+	dissect((uint8_t *)&dib_svc_fam->id, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&dib_svc_fam->version, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+	return false;
+}
 static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
 	append_dib(p);
@@ -270,6 +272,7 @@ void free_knxnetip(KNXnetIPPacket *p)
 	switch(p->header.servicetype)
 	{
 		case SEARCH_REQ:
+		case SEARCH_RES:
 		case DESCRIPTION_REQ:
 			for (int i = 0; i < p->body.hpai.length; i++)
 			{
@@ -290,6 +293,7 @@ void free_knxnetip(KNXnetIPPacket *p)
 	switch(p->header.servicetype)
 	{
 
+		case SEARCH_RES:
 		case DESCRIPTION_RES:
 
 			/* DIB */
@@ -342,6 +346,7 @@ void free_knxnetip(KNXnetIPPacket *p)
 				free(p->body.dib.pdata);
 			}
 			break;
+
 	}
 }
 
@@ -368,6 +373,9 @@ void dissect_knxnetip(const uint8_t *data)
 			break;
 
 		case SEARCH_RES:
+			dissect_hpai(&knx, data, &offset);
+			err = dissect_dib(&knx, data, &offset);
+			err = dissect_dib(&knx, data, &offset);
 			break;
 
 		case DESCRIPTION_REQ:
