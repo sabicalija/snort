@@ -395,9 +395,242 @@ static boolean dissect_conn_header(KNXnetIPPacket *p, const uint8_t *data, int *
 	return false;
 }
 
+/*
+ * Dissect cEMI structure.
+ */
+
+static boolean append_add_info(cEMI *cemi)
+{
+	uint8_t new_size = cemi->add_info.length + 1;
+
+	// Allocate new table
+	AddInfo **new_table = (AddInfo **)SnortAlloc((new_size) * sizeof(AddInfo *));
+
+	// Copy current table
+	for (int i = 0; i < cemi->add_info.length; i++)
+	{
+		new_table[i] = cemi->add_info.pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1)
+	{
+		free(cemi->add_info.pdata);
+	}
+	cemi->add_info.pdata = new_table;
+
+	// Allocate new entry
+	AddInfo *new_entry = (AddInfo *)SnortAlloc(sizeof(AddInfo));
+
+	// Append new entry to table
+	cemi->add_info.pdata[new_size-1] = new_entry;
+	cemi->add_info.length = new_size;
+
+	return false;
+}
+
+static boolean append_add_info_rffa(AddInfoRFFastAckS *add_info_rffa)
+{
+	uint8_t new_size = add_info_rffa->length + 1;
+
+	// Allocate new table
+	AddInfoRFFastAck **new_table = (AddInfoRFFastAck **)SnortAlloc((new_size) * sizeof(AddInfoRFFastAck *));
+
+	// Copy current table
+	for (int i = 0; i < add_info_rffa->length; i++)
+	{
+		new_table[i] = add_info_rffa->pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1)
+	{
+		free(add_info_rffa->pdata);
+	}
+	add_info_rffa->pdata = new_table;
+
+	// Allocate new entry
+	AddInfoRFFastAck *new_entry = (AddInfoRFFastAck *)SnortAlloc(sizeof(AddInfoRFFastAck));
+
+	// Append new entry to table
+	add_info_rffa->pdata[new_size-1] = new_entry;
+	add_info_rffa->length = new_size;
+
+	return false;
+}
+
+static boolean validate_length(uint8_t *length, uint8_t size)
+{
+	if (*length >= size)
+	{
+		*length -= size;
+	}
+	else
+	{
+		// FIXIT: Malformed packet. Alert!
+		return true;
+	}
+
+	return false;
+}
 
 static boolean dissect_cemi(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
+	cEMI *cemi = &p->body.cemi;
+
+	dissect((uint8_t *)&cemi->message_code, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+
+	/* Check if M_ message (mgmt)
+	 *
+	 * Code of Wireshark 2.6.0 contains a bug apparently,
+	 * checking for M_ messages falsely, i.e.:
+	 *
+	 *  if ((messagecode & 0xF0) < 0xF0))
+	 *
+	 *  which should result in every message code idenfied
+	 *  as non M_ message, and checking for additional info
+	 *  rf.:
+	 *   - Wireshark 2.6.0 source code - packet-knxnetip.c
+	 *   - KNX Spec. v2.1 - 3.6.3 External Message Interface p. 58, 115
+	 */
+	if ((cemi->message_code & 0xF0) < 0xD0)
+	{
+
+		/* Dissect Additional Information */
+		dissect((uint8_t *)&cemi->add_info_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+		uint8_t add_info_length = cemi->add_info_length;
+
+		while(add_info_length > 0)
+		{
+			append_add_info(cemi);
+			AddInfo *add_info_entry = &cemi->add_info.pdata[cemi->add_info.length-1];
+
+			dissect((uint8_t *)add_info_entry->type_id, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)add_info_entry->structure_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+			if (validate_length(&add_info_length, 2))
+				return true;
+
+			/*
+			 * FIXIT: Additional Information dissect not tested.
+			 */
+
+			switch (add_info_entry->type_id)
+			{
+				case PL_INFO:
+					dissect((uint8_t *)&add_info_entry->pl.domain_address, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 2))
+						return true;
+					break;
+
+				case RF_INFO:
+					dissect((uint8_t *)&add_info_entry->rf.rf_info, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)add_info_entry->rf.serial_number, data, offset, 6 * sizeof(uint8_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)&add_info_entry->rf.dl_frame_number, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 8))
+						return true;
+					break;
+
+				case BUSMON_INFO:
+					dissect((uint8_t *)&add_info_entry->bm.error_flags, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 1))
+						return true;
+					break;
+
+				case TIME_REL:
+					dissect((uint8_t *)&add_info_entry->rts.rel_timestamp, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 2))
+						return true;
+					break;
+
+				case TIME_DELAY:
+					dissect((uint8_t *)&add_info_entry->td.time_delay, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 4))
+						return true;
+					break;
+
+				case EXEND_TIME:
+					dissect((uint8_t *)&add_info_entry->ets.ext_rel_timestamp, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 4))
+						return true;
+					break;
+
+				case BIBAT_INFO:
+					dissect((uint8_t *)&add_info_entry->bb.bibat, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)add_info_entry->bb.block_number, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 2))
+						return true;
+					break;
+
+				case RF_MULTI:
+					dissect((uint8_t *)&add_info_entry->rfm.transmit_frequency, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)&add_info_entry->rfm.call_channel, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)&add_info_entry->rfm.fast_ack, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)&add_info_entry->rfm.receive_frequency, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 4))
+						return true;
+					break;
+
+				case PREAMBEL:
+					dissect((uint8_t *)&add_info_entry->pa.preamble_length, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)&add_info_entry->pa.postamble_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 3))
+						return true;
+
+					break;
+
+				case RF_FAST_ACK:
+					for(int i = 0; i < add_info_entry->structure_length; i++)
+					{
+						append_add_info_rffa(&add_info_entry->rffa);
+						AddInfoRFFastAck *rffa_entry = add_info_entry->rffa.pdata[add_info_entry->rffa.length-1];
+
+						dissect((uint8_t *)&rffa_entry->status, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+						dissect((uint8_t *)&rffa_entry->info, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+						if (validate_length(&add_info_length, 2))
+							return true;
+					}
+					break;
+
+				case MANU_DATA:
+					dissect((uint8_t *)&add_info_entry->mf.manufacturer_id, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)&add_info_entry->mf.subfunction, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+
+					if (validate_length(&add_info_length, 3))
+						return true;
+
+					uint8_t mf_data_length = add_info_entry->structure_length - 3;
+					add_info_entry->mf.data = (uint8_t *)SnortAlloc(mf_data_length * sizeof(uint8_t));
+					dissect((uint8_t *)add_info_entry->mf.data, data, offset, mf_data_length * sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+
+					if (validate_length(&add_info_length, mf_data_length))
+						return true;
+					break;
+
+				default:
+					// FIXIT: Unknown/unsupported add. information type.
+					// Alert!!
+					break;
+			}
+
+
+		}
+
+
+	}
+
 
 
 	return false;
@@ -431,6 +664,7 @@ void free_knxnetip(KNXnetIPPacket *p)
 	CRIS *cris = &p->body.cri;
 	CRDS *crds = &p->body.crd;
 	DIBS *dibs = &p->body.dib;
+	cEMI *cemi = &p->body.cemi;
 
 	switch(p->header.servicetype)
 	{
@@ -458,6 +692,49 @@ void free_knxnetip(KNXnetIPPacket *p)
 
 			if (crds->pdata)
 				free(crds->pdata);
+			break;
+
+		case DEVICE_CONFIGURATION_REQ:
+		case TUNNELLING_REQ:
+
+			/* cEMI */
+			if (cemi->message_code & 0xF0)
+			{
+				for (int i = 0; i < cemi->add_info.length; i++)
+				{
+					switch (cemi->add_info.pdata[i]->type_id)
+					{
+						/* AddInfoRFFastAckS */
+						case RF_FAST_ACK:
+							for (int j = 0; j < cemi->add_info.pdata[i]->rffa.length; j++)
+							{
+								if (cemi->add_info.pdata[i]->rffa.pdata[j])
+									free(cemi->add_info.pdata[i]->rffa.pdata[j]);
+							}
+
+							if (cemi->add_info.pdata[i]->rffa.pdata)
+								free(cemi->add_info.pdata[i]->rffa.pdata);
+							break;
+
+						/* AddInfoManufacturer */
+						case MANU_DATA:
+							if (cemi->add_info.pdata[i]->mf.data)
+								free(cemi->add_info.pdata[i]->mf.data);
+							break;
+
+						default:
+							break;
+					}
+
+					/* AddInfo */
+					if (cemi->add_info.pdata[i])
+						free(cemi->add_info.pdata[i]);
+				}
+
+				if (cemi->add_info.pdata)
+					free(cemi->add_info.pdata);
+			}
+
 			break;
 
 		case SEARCH_RES:

@@ -130,8 +130,95 @@ typedef struct _CRDS {
 	CRD **pdata;
 } CRDS;
 
-typedef struct _cEMI {
 
+/* cEMI Additional Information Field */
+typedef struct _AddInfoPLMediumInfo {
+	uint16_t domain_address;
+} AddInfoPLMediumInfo;
+typedef struct _AddInfoRFMediumInfo {
+	uint8_t rf_info;
+	uint8_t serial_number[6];
+	uint8_t dl_frame_number;
+} AddInfoRFMediumInfo;
+typedef struct _AddInfoBusmonitor {
+	uint8_t error_flags;
+} AddInfoBusmonitor;
+typedef struct _AddInfoTimestampRel {
+	uint16_t rel_timestamp;
+} AddInfoTimestampRel;
+typedef struct _AddInfoTimeDelay {
+	uint32_t time_delay;
+} AddInfoTimeDelay;
+typedef struct _AddInfoExtTimestampRel {
+	uint32_t ext_rel_timestamp;
+} AddInfoExtTimestampRel;
+typedef struct _AddInfoBiBat {
+	uint8_t bibat;
+	uint8_t block_number;
+} AddInfoBiBat;
+typedef struct _AddInfoRFMulti {
+	uint8_t transmit_frequency;
+	uint8_t call_channel;
+	uint8_t fast_ack;
+	uint8_t receive_frequency;
+} AddInfoRFMulti;
+typedef struct _AddInfoPreamble {
+	uint16_t preamble_length;
+	uint8_t postamble_length;
+} AddInfoPreamble;
+
+typedef struct _AddInfoRFFastAck {
+	uint8_t status;
+	uint8_t info;
+} AddInfoRFFastAck;
+
+typedef struct _AddInfoRFFastAckS {
+	uint8_t length;
+	AddInfoRFFastAck **pdata;
+} AddInfoRFFastAckS;
+
+typedef struct _AddInfoManufacturer {
+	uint16_t manufacturer_id;
+	uint8_t subfunction;
+	uint8_t *data;
+} AddInfoManufacturer;
+
+typedef struct _AddInfoManufacturerS {
+	uint8_t length;
+	AddInfoManufacturer **pdata;
+} AddInfoManufacturerS;
+
+typedef struct _AddInfo {
+	uint8_t type_id;
+	uint8_t structure_length;
+	union {
+		AddInfoPLMediumInfo 	pl;
+		AddInfoRFMediumInfo		rf;
+		AddInfoBusmonitor 		bm;
+		AddInfoTimestampRel 	rts;
+		AddInfoTimeDelay    	td;
+		AddInfoExtTimestampRel 	ets;
+		AddInfoBiBat			bb;
+		AddInfoRFMulti          rfm;
+		AddInfoPreamble			pa;
+		AddInfoRFFastAckS		rffa;
+		AddInfoManufacturer     mf;
+	};
+} AddInfo;
+
+typedef struct _AddInfoS {
+	uint8_t length;
+	AddInfo **pdata;
+} AddInfoS;
+
+
+typedef struct _cEMI {
+	uint8_t message_code;
+	uint8_t add_info_length;
+	AddInfoS add_info;
+	union {
+
+	};
 } cEMI;
 
 typedef struct _KNXnetIPHeader
@@ -154,6 +241,7 @@ typedef struct _KNXnetIPBody
 		DIBS dib;
 		CRIS cri;
 		CRDS crd;
+		cEMI cemi;
 	};
 } KNXnetIPBody;
 
