@@ -134,12 +134,17 @@ typedef struct _KNXnetIPHeader
 typedef struct _KNXnetIPBody
 {
 	// FIXIT: No reference/description in KNX
+	//
 	// Specification
 	//   - communication_channel_id
 	//   - connection_status
+	//   - reserved
+	//   - connectionstate_status
 	//
 	uint8_t communication_channel_id;
 	uint8_t connection_status;
+	uint8_t reserved;
+	uint8_t connectionstate_status;
 	HPAIS hpai;
 	union {
 		DIBS dib;

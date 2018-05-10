@@ -76,7 +76,7 @@ static boolean dissect_hpai(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	dissect((uint8_t *)&hpai_entry->ip,     data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
 	dissect((uint8_t *)&hpai_entry->port,   data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
 
-	// FIXIT: Host Protocol dependent data of variable length
+	// FIXIT: Host Protocol (in)dependent data of variable length
 	if (hpai_entry->structure_length != 8)
 		return true;
 
@@ -227,6 +227,7 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 			}
 			break;
 
+		// FIXIT: Implementation not tested due to missing packet captures.
 		case DIB_IP_CONF:
 			dissect((uint8_t *)&dib_entry->ip_config.ip, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
 			dissect((uint8_t *)&dib_entry->ip_config.subnet, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
@@ -235,6 +236,7 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 			dissect((uint8_t *)&dib_entry->ip_config.assignment_method, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
 
+		// FIXIT: Implementation not tested due to missing packet captures.
 		case DIB_IP_CURRENT:
 			dissect((uint8_t *)&dib_entry->ip_current.ip, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
 			dissect((uint8_t *)&dib_entry->ip_current.subnet, data, offset, sizeof(uint32_t), ENC_BIG_ENDIAN);
@@ -254,6 +256,7 @@ static boolean dissect_dib(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 			}
 			break;
 
+		// FIXIT: Implementation not tested due to missing packet captures.
 		case DIB_MFR_DATA:
 			dissect((uint8_t *)&dib_entry->mfr_data.manufacturer_id, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
 			append_dib_mfr_data(dib_entry, data, offset);
@@ -384,6 +387,8 @@ void free_knxnetip(KNXnetIPPacket *p)
 		case DESCRIPTION_REQ:
 		case CONNECT_REQ:
 		case CONNECT_RES:
+		case CONNECTIONSTATE_REQ:
+		case DISCONNECT_REQ:
 			for (int i = 0; i < p->body.hpai.length; i++)
 			{
 				if (p->body.hpai.pdata[i]) {
@@ -538,10 +543,15 @@ void dissect_knxnetip(const uint8_t *data)
 
 		case CONNECTIONSTATE_REQ:
 		case DISCONNECT_REQ:
+			dissect((uint8_t *)&knx.body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&knx.body.reserved, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect_hpai(&knx, data, &offset);
 			break;
 
 		case CONNECTIONSTATE_RES:
 		case DISCONNECT_RES:
+			dissect((uint8_t *)&knx.body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&knx.body.connectionstate_status, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
 
 		case DEVICE_CONFIGURATION_ACK:
