@@ -399,36 +399,6 @@ static boolean dissect_conn_header(KNXnetIPPacket *p, const uint8_t *data, int *
  * Dissect cEMI structure.
  */
 
-static boolean append_add_info(cEMI *cemi)
-{
-	uint8_t new_size = cemi->add_info.length + 1;
-
-	// Allocate new table
-	AddInfo **new_table = (AddInfo **)SnortAlloc((new_size) * sizeof(AddInfo *));
-
-	// Copy current table
-	for (int i = 0; i < cemi->add_info.length; i++)
-	{
-		new_table[i] = cemi->add_info.pdata[i];
-	}
-
-	// Replace old/new table
-	if (new_size != 1)
-	{
-		free(cemi->add_info.pdata);
-	}
-	cemi->add_info.pdata = new_table;
-
-	// Allocate new entry
-	AddInfo *new_entry = (AddInfo *)SnortAlloc(sizeof(AddInfo));
-
-	// Append new entry to table
-	cemi->add_info.pdata[new_size-1] = new_entry;
-	cemi->add_info.length = new_size;
-
-	return false;
-}
-
 static boolean append_add_info_rffa(AddInfoRFFastAckS *add_info_rffa)
 {
 	uint8_t new_size = add_info_rffa->length + 1;
@@ -458,6 +428,176 @@ static boolean append_add_info_rffa(AddInfoRFFastAckS *add_info_rffa)
 
 	return false;
 }
+static boolean append_add_info(cEMI *cemi)
+{
+	uint8_t new_size = cemi->lpdu.add_info.length + 1;
+
+	// Allocate new table
+	AddInfo **new_table = (AddInfo **)SnortAlloc((new_size) * sizeof(AddInfo *));
+
+	// Copy current table
+	for (int i = 0; i < cemi->lpdu.add_info.length; i++)
+	{
+		new_table[i] = cemi->lpdu.add_info.pdata[i];
+	}
+
+	// Replace old/new table
+	if (new_size != 1)
+	{
+		free(cemi->lpdu.add_info.pdata);
+	}
+	cemi->lpdu.add_info.pdata = new_table;
+
+	// Allocate new entry
+	AddInfo *new_entry = (AddInfo *)SnortAlloc(sizeof(AddInfo));
+
+	// Append new entry to table
+	cemi->lpdu.add_info.pdata[new_size-1] = new_entry;
+	cemi->lpdu.add_info.length = new_size;
+
+	return false;
+}
+
+static boolean dissect_lpdu(cEMI *cemi, const uint8_t *data, int *offset)
+{
+	LPDU *lpdu = &cemi->lpdu;
+
+	dissect((uint8_t *)&lpdu->control_field1, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&lpdu->control_field2, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&lpdu->src, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&lpdu->dest, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+
+	return false;
+}
+static boolean dissect_npdu(cEMI *cemi, const uint8_t *data, int *offset)
+{
+	if (cemi->lpdu.message_code == POLL_DATA_REQ)
+	{
+		dissect((uint8_t *)&cemi->lpdu.npdu.number_of_slots, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+		cemi->lpdu.npdu.number_of_slots &= 0xf;
+	}
+	else if (cemi->lpdu.message_code == POLL_DATA_CON)
+	{
+		dissect((uint8_t *)&cemi->lpdu.npdu.number_of_slots, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+		cemi->lpdu.npdu.number_of_slots &= 0xf;
+		cemi->lpdu.npdu.poll_data = (uint8_t *)SnortAlloc(cemi->lpdu.npdu.number_of_slots * sizeof(uint8_t));
+		dissect((uint8_t *)cemi->lpdu.npdu.poll_data, data, offset, cemi->lpdu.npdu.number_of_slots * sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+	}
+	else {
+		dissect((uint8_t *)&cemi->lpdu.npdu.structure_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	}
+
+	return false;
+}
+static boolean dissect_tpdu(cEMI *cemi, const uint8_t *data, int *offset)
+{
+	dissect((uint8_t *)&cemi->lpdu.npdu.tpdu.tpci, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	cemi->lpdu.npdu.tpdu.tpci &= 0xfc;
+
+	/* Revert 1 byte, as this field contains ACPI as well */
+	*offset -= 1;
+	return false;
+}
+static boolean dissect_apdu(cEMI *cemi, const uint8_t *data, int *offset)
+{
+	uint16_t type;
+	uint8_t length = cemi->lpdu.npdu.structure_length;
+	APDU *apdu = &cemi->lpdu.npdu.tpdu.apdu;
+
+	if (length != 0)
+	{
+		uint16_t apci_bytes;
+		dissect((uint8_t *)&apci_bytes, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+		apdu->apci = apci_bytes & 0x3FF;
+		type = apci_bytes & 0x3C0;
+
+		switch (type)
+		{
+			case A_ADC_RED:
+			case A_ADC_RES:
+				type = apdu->apci & 0x1FF;
+				if (type == A_SYS_RED || type == A_SYS_RES || type == A_SYS_WRT || type == A_SYS_BROAD)
+				{
+					// apdu->apci = apci_bytes 0x3ff;
+				}
+				else
+				{
+					apdu->apci &= 0x3c0;
+					apdu->channel_nr &= 0x3f;
+				}
+				break;
+
+			case A_GROUPVALUE_RES:
+			case A_GROUPVALUE_WRT:
+				apdu->apci = apci_bytes & 0x3c0;
+				apdu->cemi_data = (uint8_t) apci_bytes & 0x3f;
+				if (type == A_GROUPVALUE_RES && length > 1)
+				{
+					apdu->data = (uint8_t *)SnortAlloc((length-1) * sizeof(uint8_t));
+					dissect((uint8_t*)apdu->data, data, offset, (length-1) * sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+				}
+				break;
+
+			case A_MEM_RED:
+			case A_MEM_RES:
+			case A_MEM_WRT:
+				apdu->apci = apci_bytes & 0x3c0;
+				apdu->memory_number = apci_bytes & 0x3f;
+				dissect((uint8_t *)&apdu->memory_address, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+				if (length > 3)
+				{
+					apdu->data = (uint8_t *)SnortAlloc((length-3) * sizeof(uint8_t));
+					dissect((uint8_t *)apdu->data, data, offset, (length-3) * sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+				}
+				break;
+
+			case COUPLER_SPECIFIC_SERVICE:
+
+				// apdu->apci = apci_bytes 0x3ff;
+
+				switch(apdu->apci)
+				{
+					case A_AUTHORIZE_REQ:
+					case A_KEY_WRT:
+						dissect((uint8_t *)&apdu->apci_level, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+						dissect((uint8_t *)&apdu->apci_key, data, offset, sizeof(uint32_t), ENC_LITTLE_ENDIAN);
+						break;
+
+					case A_AUTHORIZE_RES:
+					case A_KEY_RES:
+						dissect((uint8_t *)&apdu->apci_level, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+						break;
+
+					case A_PROPVALUE_RED:
+					case A_PROPVALUE_RES:
+						dissect((uint8_t *)&apdu->apci_object_index, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+						dissect((uint8_t *)&apdu->apci_property_id, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+						dissect((uint8_t *)&apdu->start_index, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+						apdu->number_of_elements = (uint8_t) ((apdu->start_index & 0xf000) > 8);
+						apdu->start_index &= 0x0fff;
+						if (apdu->apci == A_PROPVALUE_RES)
+						{
+							apdu->data = (uint8_t *)SnortAlloc((length-5) * sizeof(uint8_t));
+							dissect((uint8_t *)apdu->data, data, offset, (length-5) * sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+						}
+						break;
+
+					default:
+						// FIXIT: Unsupported ACPI
+						break;
+				}
+
+				break;
+
+			default:
+				// FIXIT: Unsupported type.
+				break;
+		}
+
+	}
+
+	return false;
+}
 
 static boolean validate_length(uint8_t *length, uint8_t size)
 {
@@ -477,8 +617,12 @@ static boolean validate_length(uint8_t *length, uint8_t size)
 static boolean dissect_cemi(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 {
 	cEMI *cemi = &p->body.cemi;
+	uint16_t structure_length = p->header.totallength - KNXNETIP_HEADER_LENGTH;
 
-	dissect((uint8_t *)&cemi->message_code, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+	// FIXIT: Resolve by cleaning up LPDU data structure */
+	uint8_t reserved[6];
+
+	dissect((uint8_t *)&cemi->lpdu.message_code, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 
 
 	/* Check if M_ message (mgmt)
@@ -494,28 +638,26 @@ static boolean dissect_cemi(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 	 *   - Wireshark 2.6.0 source code - packet-knxnetip.c
 	 *   - KNX Spec. v2.1 - 3.6.3 External Message Interface p. 58, 115
 	 */
-	if ((cemi->message_code & 0xF0) < 0xD0)
+	if ((cemi->lpdu.message_code & 0xF0) < 0xD0)
 	{
 
 		/* Dissect Additional Information */
-		dissect((uint8_t *)&cemi->add_info_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+		dissect((uint8_t *)&cemi->lpdu.add_info_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 
-		uint8_t add_info_length = cemi->add_info_length;
+		uint8_t add_info_length = cemi->lpdu.add_info_length;
 
 		while(add_info_length > 0)
 		{
 			append_add_info(cemi);
-			AddInfo *add_info_entry = &cemi->add_info.pdata[cemi->add_info.length-1];
+			AddInfo *add_info_entry = cemi->lpdu.add_info.pdata[cemi->lpdu.add_info.length-1];
 
-			dissect((uint8_t *)add_info_entry->type_id, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-			dissect((uint8_t *)add_info_entry->structure_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&add_info_entry->type_id, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&add_info_entry->structure_length, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 
 			if (validate_length(&add_info_length, 2))
 				return true;
 
-			/*
-			 * FIXIT: Additional Information dissect not tested.
-			 */
+			// FIXIT: Additional Information dissect not tested.
 
 			switch (add_info_entry->type_id)
 			{
@@ -565,7 +707,7 @@ static boolean dissect_cemi(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 
 				case BIBAT_INFO:
 					dissect((uint8_t *)&add_info_entry->bb.bibat, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-					dissect((uint8_t *)add_info_entry->bb.block_number, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+					dissect((uint8_t *)&add_info_entry->bb.block_number, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 
 					if (validate_length(&add_info_length, 2))
 						return true;
@@ -631,6 +773,77 @@ static boolean dissect_cemi(KNXnetIPPacket *p, const uint8_t *data, int *offset)
 
 	}
 
+	// FIXIT: CEMI dissect not tested.
+	switch (cemi->lpdu.message_code)
+	{
+		case DATA_REQ:
+		case DATA_CON:
+		case DATA_IND:
+		case POLL_DATA_REQ:
+		case POLL_DATA_CON:
+			dissect_lpdu(cemi, data, offset);
+			dissect_npdu(cemi, data, offset);
+
+			if (cemi->lpdu.message_code != POLL_DATA_CON &&
+				cemi->lpdu.message_code != POLL_DATA_REQ)
+			{
+				dissect_tpdu(cemi, data, offset);
+				dissect_apdu(cemi, data, offset);
+			}
+			break;
+
+		case RAW_REQ:
+		case RAW_CON:
+		case RAW_IND:
+		case BUSMON_IND:
+//			*offset -= 7;
+//			uint16_t structure_length;
+//			dissect((uint8_t *)&structure_length, data, offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+//			*offset += 5;
+
+			// FIXIT: Check endianess
+			cemi->raw_data = (uint8_t *)SnortAlloc((structure_length - 5) * sizeof(uint8_t));
+			dissect((uint8_t *)cemi->raw_data, data, offset, (structure_length - 5) * sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+
+			break;
+
+		case DATA_INDV_IND:
+		case DATA_INDV_REQ:
+		case DATA_CONNEC_IND:
+		case DATA_CONNEC_REQ:
+
+			// FIXIT: Resolve by cleaning up LPDU data structure */
+//			uint8_t reserved[6];
+			dissect((uint8_t *)reserved, data, offset, 6 * sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+			dissect_npdu(cemi, data, offset);
+			// FIXIT: Resolve by cleaning up TPDU data structure */
+			uint8_t reserved2;
+			dissect((uint8_t *)&reserved2, data, offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect_apdu(cemi, data, offset);
+			break;
+
+		case PROPREAD_REQ:
+		case PROPREAD_CON:
+		case PROPWRITE_REQ:
+		case PROPWRITE_CON:
+		case PROPINFO_IND:
+			// FIXIT: Continue note:
+			//  - Cleanup Data Structures
+			//  - Implement PROPREAD_REQ, FUNCPROPCOM_REQ
+			break;
+
+		case FUNCPROPCOM_REQ:
+		case FUNCPROPSTATREAD_REQ:
+		case FUNCPROPCOM_CON:
+			break;
+
+		case RESET_REQ:
+		case RESET_IND:
+			break;
+
+		default:
+			break;
+	}
 
 
 	return false;
@@ -698,41 +911,74 @@ void free_knxnetip(KNXnetIPPacket *p)
 		case TUNNELLING_REQ:
 
 			/* cEMI */
-			if (cemi->message_code & 0xF0)
+			if (cemi->lpdu.message_code & 0xF0)
 			{
-				for (int i = 0; i < cemi->add_info.length; i++)
+				/* AddInfo */
+				for (int i = 0; i < cemi->lpdu.add_info.length; i++)
 				{
-					switch (cemi->add_info.pdata[i]->type_id)
+					switch (cemi->lpdu.add_info.pdata[i]->type_id)
 					{
 						/* AddInfoRFFastAckS */
 						case RF_FAST_ACK:
-							for (int j = 0; j < cemi->add_info.pdata[i]->rffa.length; j++)
+							for (int j = 0; j < cemi->lpdu.add_info.pdata[i]->rffa.length; j++)
 							{
-								if (cemi->add_info.pdata[i]->rffa.pdata[j])
-									free(cemi->add_info.pdata[i]->rffa.pdata[j]);
+								if (cemi->lpdu.add_info.pdata[i]->rffa.pdata[j])
+									free(cemi->lpdu.add_info.pdata[i]->rffa.pdata[j]);
 							}
 
-							if (cemi->add_info.pdata[i]->rffa.pdata)
-								free(cemi->add_info.pdata[i]->rffa.pdata);
+							if (cemi->lpdu.add_info.pdata[i]->rffa.pdata)
+								free(cemi->lpdu.add_info.pdata[i]->rffa.pdata);
 							break;
 
 						/* AddInfoManufacturer */
 						case MANU_DATA:
-							if (cemi->add_info.pdata[i]->mf.data)
-								free(cemi->add_info.pdata[i]->mf.data);
+							if (cemi->lpdu.add_info.pdata[i]->mf.data)
+								free(cemi->lpdu.add_info.pdata[i]->mf.data);
 							break;
 
 						default:
 							break;
 					}
 
-					/* AddInfo */
-					if (cemi->add_info.pdata[i])
-						free(cemi->add_info.pdata[i]);
+					if (cemi->lpdu.add_info.pdata[i])
+						free(cemi->lpdu.add_info.pdata[i]);
 				}
 
-				if (cemi->add_info.pdata)
-					free(cemi->add_info.pdata);
+				if (cemi->lpdu.add_info.pdata)
+					free(cemi->lpdu.add_info.pdata);
+			}
+
+			switch (cemi->lpdu.message_code)
+			{
+				case DATA_REQ:
+				case DATA_CON:
+				case DATA_IND:
+				case POLL_DATA_REQ:
+				case POLL_DATA_CON:
+
+					if (cemi->lpdu.message_code == POLL_DATA_CON)
+					{
+						if (cemi->lpdu.npdu.poll_data)
+							free(cemi->lpdu.npdu.poll_data);
+					}
+
+					if (cemi->lpdu.npdu.tpdu.apdu.data)
+						free(cemi->lpdu.npdu.tpdu.apdu.data);
+
+					break;
+
+				case RAW_REQ:
+				case RAW_CON:
+				case RAW_IND:
+				case BUSMON_IND:
+
+					if (cemi->raw_data)
+						free(cemi->raw_data);
+
+					break;
+
+				default:
+					break;
 			}
 
 			break;

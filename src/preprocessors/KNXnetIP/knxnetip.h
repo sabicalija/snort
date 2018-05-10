@@ -24,7 +24,6 @@ typedef struct _HPAI {
 	uint32_t ip;
 	uint16_t port;
 } HPAI;
-
 typedef struct _HPAIS {
 	uint8_t length;
 	HPAI    **pdata;
@@ -87,7 +86,6 @@ typedef struct _DIBSuppSvc {
 	uint8_t length;
 	DIBSuppSvcFamily **pdata;
 } DIBSuppSvc;
-
 typedef struct _DIB {
 	uint8_t structure_length;
 	uint8_t dib_type;
@@ -113,23 +111,19 @@ typedef struct _CRI {
 	uint8_t knxlayer;
 	uint8_t reserved;
 } CRI;
-
 typedef struct _CRIS {
 	uint8_t length;
 	CRI **pdata;
 } CRIS;
-
 typedef struct _CRD {
 	uint8_t structure_length;
 	uint8_t connection_type;
 	uint16_t knxaddress;
 } CRD;
-
 typedef struct _CRDS {
 	uint8_t length;
 	CRD **pdata;
 } CRDS;
-
 
 /* cEMI Additional Information Field */
 typedef struct _AddInfoPLMediumInfo {
@@ -166,28 +160,23 @@ typedef struct _AddInfoPreamble {
 	uint16_t preamble_length;
 	uint8_t postamble_length;
 } AddInfoPreamble;
-
 typedef struct _AddInfoRFFastAck {
 	uint8_t status;
 	uint8_t info;
 } AddInfoRFFastAck;
-
 typedef struct _AddInfoRFFastAckS {
 	uint8_t length;
 	AddInfoRFFastAck **pdata;
 } AddInfoRFFastAckS;
-
 typedef struct _AddInfoManufacturer {
 	uint16_t manufacturer_id;
 	uint8_t subfunction;
 	uint8_t *data;
 } AddInfoManufacturer;
-
 typedef struct _AddInfoManufacturerS {
 	uint8_t length;
 	AddInfoManufacturer **pdata;
 } AddInfoManufacturerS;
-
 typedef struct _AddInfo {
 	uint8_t type_id;
 	uint8_t structure_length;
@@ -205,21 +194,80 @@ typedef struct _AddInfo {
 		AddInfoManufacturer     mf;
 	};
 } AddInfo;
-
 typedef struct _AddInfoS {
 	uint8_t length;
 	AddInfo **pdata;
 } AddInfoS;
 
+/* cEMI */
 
-typedef struct _cEMI {
+/* Application Layer Protocol Data Unit */
+typedef struct _APDU {
+	/* Application Layer Protocol Control Information */
+	uint16_t apci;
+	// FIXIT: Cleanup data structure, create Message
+	// Type specific structures
+	uint8_t channel_nr;
+	uint8_t cemi_data;
+	uint8_t memory_number;
+	uint16_t memory_address;
+	uint32_t apci_key;
+	uint32_t apci_level;
+	uint8_t apci_object_index;
+	uint8_t apci_property_id;
+	uint8_t number_of_elements;
+	uint16_t start_index;
+	uint8_t *data;
+} APDU;
+
+/* Transport Layer Protocol Data Unit */
+typedef struct _TPDU {
+	/* Transport Layer Protocol Control Information */
+	uint8_t tpci;
+	APDU apdu;
+} TPDU;
+
+/* Network Layer Protocol Data Unit */
+typedef struct _NPDU {
+	union {
+		uint8_t structure_length;
+		uint8_t number_of_slots;
+	};
+	union {
+		TPDU tpdu;
+		uint8_t *poll_data;
+	};
+} NPDU;
+
+/* Data Link Layer Protocol Data Unit */
+typedef struct _LPDU {
 	uint8_t message_code;
 	uint8_t add_info_length;
 	AddInfoS add_info;
-	union {
+	uint8_t control_field1;
+	uint8_t control_field2;
+	uint16_t src;
+	uint16_t dest;
+	// FIXIT: Cleanup data structure based on message code
+	uint16_t interface_object_type;
+	uint8_t object_instance;
+	uint8_t property_id;
+	uint8_t number_of_elements;
+	uint8_t start_index;
+	NPDU npdu;
+} LPDU;
 
-	};
+typedef struct _cEMI {
+	LPDU lpdu;
+	// FIXIT: Cleanup data structure based on message code
+//	uint8_t bm_status;
+//	uint16_t bm_timestamp;
+//	uint8_t bm_control;
+//	uint8_t framechecksum;
+	uint8_t *raw_data;
 } cEMI;
+
+
 
 typedef struct _KNXnetIPHeader
 {
@@ -228,7 +276,6 @@ typedef struct _KNXnetIPHeader
 	uint16_t servicetype;
 	uint16_t totallength;
 } KNXnetIPHeader;
-
 typedef struct _KNXnetIPBody
 {
 	uint8_t communication_channel_id;
