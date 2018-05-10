@@ -488,7 +488,7 @@ static int append_group_address(KNXNETIP_GRPADDRS *grpaddr)
 	uint8_t new_size = grpaddr->length + 1;
 
 	// Allocate new pointer table
-	KNXNETIP_GRPADDRS **new_table = (KNXNETIP_GRPADDRS **)SnortAlloc((new_size) * sizeof(KNXNETIP_GRPADDRS *));
+	KNXNETIP_GRPADDR **new_table = (KNXNETIP_GRPADDR **)SnortAlloc((new_size) * sizeof(KNXNETIP_GRPADDR *));
 	if (new_table == NULL)
 	{
 		return -1;
