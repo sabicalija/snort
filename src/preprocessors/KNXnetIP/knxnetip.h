@@ -298,6 +298,7 @@ typedef struct _KNXnetIPPacket
 	KNXnetIPBody body;
 } KNXnetIPPacket;
 
-void dissect_knxnetip(const uint8_t *data);
+void free_knxnetip(KNXnetIPPacket *p);
+int dissect_knxnetip(const uint8_t *data, KNXnetIPPacket *p);
 
 #endif /* __KNXNETIP_H__ */

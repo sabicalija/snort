@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libknxnetip.a
 
-SUBDIRS = user_interface
+SUBDIRS = user_interface anomaly_detection
 
 
 
@@ -19,7 +19,8 @@ knxnetip.c knxnetip.h
 libknxnetip_a_LIBADD = \
 user_interface/knx_ui_snort.o \
 user_interface/knx_ui_config.o \
-knxnetip.o
+knxnetip.o \
+anomaly_detection/knx_ad.o
 
 
 

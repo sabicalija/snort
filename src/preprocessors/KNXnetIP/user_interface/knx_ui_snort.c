@@ -94,7 +94,7 @@ int KNXnetIPInitializeServerConfig(KNXNETIP_CONF *config, char *errstr, int errs
 
 int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *errstr, int errstrlen)
 {
-	int ret;
+//	int ret;
 	char *pcToken;
 	boolean bTokens = false;
 	uint8_t entry = config->length - 1;

@@ -20,6 +20,7 @@
 #include "knxnetip.h"
 #include "knx_ui_config.h"
 #include "knx_ui_snort.h"
+#include "knx_ad.h"
 
 //#include "preprocids.h"
 
@@ -54,8 +55,8 @@
 
 // EXT. GLOBALS
 /* Variables that we need from Snort to log errors correctly, etc.. */
-extern char *file_name;
-extern int file_line;
+//extern char *file_name;
+//extern int file_line;
 
 // GLOBALS
 /* Note: This is the only way to work with Snort preprocessors.
@@ -228,7 +229,29 @@ void SetupKNXnetIP(void)
 
 static void KNXnetIPProcess(Packet *p, void *context)
 {
-	dissect_knxnetip(p->data);
+	tSfPolicyId policy_id = getNapRuntimePolicy();
+	KNXNETIP_CONF *pPolicyConfig = NULL;
+//	PROFILE_VARS;
+	sfPolicyUserPolicySet(knx_config, policy_id);
+	pPolicyConfig = (KNXNETIP_CONF *)sfPolicyUserDataGetCurrent(knx_config);
+
+	if (pPolicyConfig == NULL)
+		return;
+
+	// Check IP and Port
+
+	// Load specific configuration
+	KNXNETIP_SERVER_CONF *config = pPolicyConfig->pdata[0];
+
+	// Dissect KNXnet/IP Packet
+	KNXnetIPPacket knx;
+	dissect_knxnetip(p->data, &knx);
+
+	// Detect anomalies
+	detect_knxnetip(p, &knx, config);
+
+	// Release memory
+	free_knxnetip(&knx);
 }
 
 static void KNXnetIPCleanExit(int signal, void *data)

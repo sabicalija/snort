@@ -1040,84 +1040,86 @@ void free_knxnetip(KNXnetIPPacket *p)
 	}
 }
 
-void dissect_knxnetip(const uint8_t *data)
-{
-	KNXnetIPPacket knx;
-	int offset = 0;
-	boolean err = false;
 
-	memset(&knx, 0, sizeof(KNXnetIPPacket));
+int dissect_knxnetip(const uint8_t *data, KNXnetIPPacket *knx)
+{
+//	KNXnetIPPacket knx;
+	int offset = 0;
+//	boolean err = false;
+
+	memset(knx, 0, sizeof(KNXnetIPPacket));
 
 	/* Header */
-	dissect((uint8_t *)&knx.header.length,      data, &offset, sizeof(uint8_t),  ENC_BIG_ENDIAN);
-	dissect((uint8_t *)&knx.header.version,     data, &offset, sizeof(uint8_t),  ENC_BIG_ENDIAN);
-	dissect((uint8_t *)&knx.header.servicetype, data, &offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
-	dissect((uint8_t *)&knx.header.totallength, data, &offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&knx->header.length,      data, &offset, sizeof(uint8_t),  ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&knx->header.version,     data, &offset, sizeof(uint8_t),  ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&knx->header.servicetype, data, &offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
+	dissect((uint8_t *)&knx->header.totallength, data, &offset, sizeof(uint16_t), ENC_BIG_ENDIAN);
 
+	// FIXIT: Check error codes.
 
 	/* Body */
-	switch(knx.header.servicetype)
+	switch(knx->header.servicetype)
 	{
 		case SEARCH_REQ:
-			dissect_hpai(&knx, data, &offset);
+			dissect_hpai(knx, data, &offset);
 			break;
 
 		case SEARCH_RES:
-			dissect_hpai(&knx, data, &offset);
-			err = dissect_dib(&knx, data, &offset);
-			err = dissect_dib(&knx, data, &offset);
+			dissect_hpai(knx, data, &offset);
+			dissect_dib(knx, data, &offset);
+			dissect_dib(knx, data, &offset);
 			break;
 
 		case DESCRIPTION_REQ:
-			dissect_hpai(&knx, data, &offset);
+			dissect_hpai(knx, data, &offset);
 			break;
 
 		case DESCRIPTION_RES:
-			err = dissect_dib(&knx, data, &offset);
-			err = dissect_dib(&knx, data, &offset);
+			dissect_dib(knx, data, &offset);
+			dissect_dib(knx, data, &offset);
 			break;
 
 		case CONNECT_REQ:
-			dissect_hpai(&knx, data, &offset);
-			dissect_hpai(&knx, data, &offset);
-			dissect_cri(&knx, data, &offset);
+			dissect_hpai(knx, data, &offset);
+			dissect_hpai(knx, data, &offset);
+			dissect_cri(knx, data, &offset);
 			break;
 
 		case CONNECT_RES:
-			dissect((uint8_t *)&knx.body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-			dissect((uint8_t *)&knx.body.connection_status, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-			dissect_hpai(&knx, data, &offset);
-			dissect_crd(&knx, data, &offset);
+			dissect((uint8_t *)&knx->body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&knx->body.connection_status, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect_hpai(knx, data, &offset);
+			dissect_crd(knx, data, &offset);
 			break;
 
 		case CONNECTIONSTATE_REQ:
 		case DISCONNECT_REQ:
-			dissect((uint8_t *)&knx.body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-			dissect((uint8_t *)&knx.body.reserved, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-			dissect_hpai(&knx, data, &offset);
+			dissect((uint8_t *)&knx->body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&knx->body.reserved, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect_hpai(knx, data, &offset);
 			break;
 
 		case CONNECTIONSTATE_RES:
 		case DISCONNECT_RES:
-			dissect((uint8_t *)&knx.body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
-			dissect((uint8_t *)&knx.body.connectionstate_status, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&knx->body.communication_channel_id, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect((uint8_t *)&knx->body.connectionstate_status, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
 
 		case DEVICE_CONFIGURATION_ACK:
-			dissect_conn_header(&knx, data, &offset);
-			dissect((uint8_t *)&knx.body.conn_header.confackstat, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect_conn_header(knx, data, &offset);
+			dissect((uint8_t *)&knx->body.conn_header.confackstat, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
 
 		case DEVICE_CONFIGURATION_REQ:
 		case TUNNELLING_REQ:
-			dissect_conn_header(&knx, data, &offset);
-			dissect((uint8_t *)&knx.body.conn_header.reserved, data, &offset, sizeof(uint8_t), ENC_LITTLE_ENDIAN);
-			dissect_cemi(&knx, data, &offset);
+			dissect_conn_header(knx, data, &offset);
+			dissect((uint8_t *)&knx->body.conn_header.reserved, data, &offset, sizeof(uint8_t), ENC_LITTLE_ENDIAN);
+			dissect_cemi(knx, data, &offset);
 			break;
 
 		case TUNNELLING_ACK:
-			dissect_conn_header(&knx, data, &offset);
-			dissect((uint8_t *)&knx.body.conn_header.tunnackstat, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
+			dissect_conn_header(knx, data, &offset);
+			dissect((uint8_t *)&knx->body.conn_header.tunnackstat, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;
 
 		case ROUTING_INDICATION:
@@ -1146,5 +1148,7 @@ void dissect_knxnetip(const uint8_t *data)
 	}
 
 
-	free_knxnetip(&knx);
+//	free_knxnetip(&knx);
+
+	return 0;
 }
