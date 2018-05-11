@@ -1,0 +1,22 @@
+#alert icmp any any -> $HOME_NET any (msg:"ICMP connection attempt"; sid:1000001; rev:1;)
+
+#
+# BACnet/IP
+#
+alert udp $HOME_NET any -> $BAC_NET 47808 (         \
+  msg:"BACnet/IP local communication";              \
+  sid:1000102;                                      \
+  rev:1;                                            \
+)
+
+alert udp $EXTERNAL_NET any -> $BAC_NET 47808 (     \
+  msg:"BACnet/IP remote communication (request)";   \
+  sid:1000103;                                      \
+  rev:1;                                            \  
+)
+
+alert udp $BAC_NET 47808 -> $EXTERNAL_NET any (     \
+  msg:"BACnet/IP remote communication (response)";  \
+  sid:1000104;                                      \
+  rev:1;                                            \
+)
