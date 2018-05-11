@@ -241,7 +241,7 @@ static void KNXnetIPProcess(Packet *p, void *context)
 	// Check IP and Port
 
 	// Load specific configuration
-	KNXNETIP_SERVER_CONF *config = pPolicyConfig->pdata[0];
+	KNXNETIP_SERVER_CONF *config = pPolicyConfig->pdata[1];
 
 	// Dissect KNXnet/IP Packet
 	KNXnetIPPacket knx;

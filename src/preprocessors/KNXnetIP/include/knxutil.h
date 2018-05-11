@@ -32,8 +32,8 @@ typedef struct _value_string {
 #define DEVICE_CONFIGURATION_REQ        (0x0310)
 #define DEVICE_CONFIGURATION_ACK        (0x0311)
 /* TUnneling Service Type Identifiers */
-#define TUNNELLING_REQ                  (0x0420)
-#define TUNNELLING_ACK                  (0x0421)
+#define TUNNELING_REQ                  (0x0420)
+#define TUNNELING_ACK                  (0x0421)
 /* Routing Service Type Identifiers */
 #define ROUTING_INDICATION              (0x0530)
 #define ROUTING_LOST                    (0x0531)
@@ -114,6 +114,9 @@ typedef struct _value_string {
 #define A_KEY_RES 0x3D4
 #define A_PROPVALUE_RED 0x3D5
 #define A_PROPVALUE_RES 0x3D6
+/* Control field 2 */
+#define DAT_INDIVIDUAL 	0x00
+#define DAT_GROUP		0x80
 
 static const
 value_string knxnetip_service_identifier[] = {
@@ -129,8 +132,8 @@ value_string knxnetip_service_identifier[] = {
     { DISCONNECT_RES,           "DISCONNECT_RESPONSE" },
     { DEVICE_CONFIGURATION_REQ, "DEVICE_CONFIGURATION_REQUEST" },
     { DEVICE_CONFIGURATION_ACK, "DEVICE_CONFIGURATION_ACK" },
-    { TUNNELLING_REQ,           "TUNNELLING_REQUEST" },
-    { TUNNELLING_ACK,           "TUNNELING_ACK" },
+    { TUNNELING_REQ,            "TUNNELING_REQUEST" },
+    { TUNNELING_ACK,            "TUNNELING_ACK" },
     { ROUTING_INDICATION,       "ROUTING_INDICATION" },
     { ROUTING_LOST,             "ROUTING_LOST_MESSAGE" },
     { ROUTING_BUSY,             "ROUTING_BUSY" },

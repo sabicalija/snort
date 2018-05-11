@@ -20,8 +20,12 @@
 #define KNX_SERVER_PORT				"port"
 #define KNX_SERVICE					"service"
 #define KNX_PROGRAMMING 			"programming"
-#define KNX_PHYSICAL_ADDRESSING 	"physical_address"
-#define NO_PHYSICAL_ADDRESSING		"!physical_address"
+#define KNX_INDIVIDUAL_ADDRESSING 	"individual_address"
+#define NO_INDIVIDUAL_ADDRESSING	"!individual_address"
+#define KNX_GROUP_ADDRESSING		"group_address"
+#define NO_GROUP_ADDRESSING			"!group_address"
+#define KNX_PAYLOAD					"payload"
+#define NO_KNX_PAYLOAD				"!payload"
 #define KNX_GROUP_ADDRESS_FILE		"file"
 
 int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config)
@@ -31,8 +35,9 @@ int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config)
 	from = config->pdata[GLOBAL_CONFIG];
 	to = config->pdata[config->length-1];
 
-	to->bPhysicalAddressing = from->bPhysicalAddressing;
+	to->bIndividualAddressing = from->bIndividualAddressing;
 	to->bProgramming = from->bProgramming;
+	to->bPayload = from->bPayload;
 
 	// FIXIT: full copy of config not supported, as freeing
 	// memory results in multiple free's in current implementation of
@@ -110,14 +115,36 @@ int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *er
 		}
 
 		/* Detect Physical Addressing */
-		else if(!strcmp(KNX_PHYSICAL_ADDRESSING, pcToken))
+		else if(!strcmp(KNX_INDIVIDUAL_ADDRESSING, pcToken))
 		{
-			config->pdata[entry]->bPhysicalAddressing = true;
+			config->pdata[entry]->bIndividualAddressing = true;
 		}
 
-		else if(!strcmp(NO_PHYSICAL_ADDRESSING, pcToken))
+		else if(!strcmp(NO_INDIVIDUAL_ADDRESSING, pcToken))
 		{
-			config->pdata[entry]->bPhysicalAddressing = false;
+			config->pdata[entry]->bIndividualAddressing = false;
+		}
+
+		/* Detect Group Addresses */
+		else if(!strcmp(KNX_GROUP_ADDRESSING, pcToken))
+		{
+			config->pdata[entry]->bGroupAddressing = true;
+		}
+
+		else if(!strcmp(NO_GROUP_ADDRESSING, pcToken))
+		{
+			config->pdata[entry]->bGroupAddressing = false;
+		}
+
+		/* Log Payload */
+		else if(!strcmp(KNX_PAYLOAD, pcToken))
+		{
+			config->pdata[entry]->bPayload = true;
+		}
+
+		else if(!strcmp(NO_KNX_PAYLOAD, pcToken))
+		{
+			config->pdata[entry]->bPayload = false;
 		}
 
 		else if(!strcmp(KNX_GROUP_ADDRESS_FILE, pcToken))
@@ -160,7 +187,7 @@ int KNXnetIPProcessConf(struct _SnortConfig *sc, KNXNETIP_CONF *config, char *er
 static int KNXnetIPPrintConf(KNXNETIP_SERVER_CONF *s)
 {
 	LogMessage("      Detect device programming:       %s\n", s->bProgramming ? "Yes" : "No");
-	LogMessage("      Detect physical addressing:      %s\n", s->bPhysicalAddressing ? "Yes" : "No");
+	LogMessage("      Detect individual addressing:    %s\n", s->bIndividualAddressing ? "Yes" : "No");
 
 	if (s->ip.length > 0) {
 		knx_ui_print_ip_addresses(LogMessage, &s->ip);
@@ -172,6 +199,7 @@ static int KNXnetIPPrintConf(KNXNETIP_SERVER_CONF *s)
 		knx_ui_print_services(LogMessage, &s->service);
 	}
 	if (s->filename != NULL) {
+		LogMessage("      Detect group addresses:          %s\n", s->bIndividualAddressing ? "Yes" : "No");
 		LogMessage("      Group Address File:              %s\n", s->filename);
 		knx_ui_print_group_addresses(LogMessage, &s->group_address);
 	}
@@ -180,21 +208,31 @@ static int KNXnetIPPrintConf(KNXNETIP_SERVER_CONF *s)
 
 int KNXnetIPPrintGlobalConf(KNXNETIP_CONF *config)
 {
+	LogMessage(KNX_UI_BACKGROUND_COLOR);
+	LogMessage(KNX_UI_FOREGROUND_COLOR);
+
 	uint8_t entry = config->length - 1;
 	KNXNETIP_SERVER_CONF *s = config->pdata[entry];
 
 	LogMessage("KNXnet/IP Config:\n");
 	LogMessage("  GLOBAL_CONFIG\n");
 	KNXnetIPPrintConf(s);
+
+	LogMessage(KNX_UI_RESET_COLOR);
 	return 0;
 }
 
 int KNXnetIPPrintServerConf(KNXNETIP_CONF *config)
 {
+	LogMessage(KNX_UI_BACKGROUND_COLOR);
+	LogMessage(KNX_UI_FOREGROUND_COLOR);
+
 	uint8_t entry = config->length - 1;
 	KNXNETIP_SERVER_CONF *s = config->pdata[entry];
 
 	LogMessage("    SERVER_CONFIG\n");
 	KNXnetIPPrintConf(s);
+
+	LogMessage(KNX_UI_RESET_COLOR);
 	return 0;
 }

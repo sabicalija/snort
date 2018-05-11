@@ -12,6 +12,9 @@
 #include "snort.h"
 #include "knx_ui_config.h"
 
+#define KNX_UI_BACKGROUND_COLOR "\e[47m"
+#define KNX_UI_FOREGROUND_COLOR "\e[30m"
+#define KNX_UI_RESET_COLOR "\e[49m\e[39m"
 
 int KNXnetIPCopyGlobalConf(KNXNETIP_CONF *config);
 int KNXnetIPInitializeGlobalConfig(KNXNETIP_CONF *config, char *errstr, int errstrlen);

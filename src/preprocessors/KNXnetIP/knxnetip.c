@@ -908,7 +908,7 @@ void free_knxnetip(KNXnetIPPacket *p)
 			break;
 
 		case DEVICE_CONFIGURATION_REQ:
-		case TUNNELLING_REQ:
+		case TUNNELING_REQ:
 
 			/* cEMI */
 			if (cemi->lpdu.message_code & 0xF0)
@@ -1111,13 +1111,13 @@ int dissect_knxnetip(const uint8_t *data, KNXnetIPPacket *knx)
 			break;
 
 		case DEVICE_CONFIGURATION_REQ:
-		case TUNNELLING_REQ:
+		case TUNNELING_REQ:
 			dissect_conn_header(knx, data, &offset);
 			dissect((uint8_t *)&knx->body.conn_header.reserved, data, &offset, sizeof(uint8_t), ENC_LITTLE_ENDIAN);
 			dissect_cemi(knx, data, &offset);
 			break;
 
-		case TUNNELLING_ACK:
+		case TUNNELING_ACK:
 			dissect_conn_header(knx, data, &offset);
 			dissect((uint8_t *)&knx->body.conn_header.tunnackstat, data, &offset, sizeof(uint8_t), ENC_BIG_ENDIAN);
 			break;

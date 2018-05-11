@@ -92,7 +92,9 @@ typedef struct _KNXNETIP_GRPADDRS {
  */
 typedef struct _KNXNETIP_SERVER_CONF {
 	bool bProgramming;
-	bool bPhysicalAddressing;
+	bool bIndividualAddressing;
+	bool bGroupAddressing;
+	bool bPayload;
 	char *filename;
 	KNXNETIP_IPS ip;
 	KNXNETIP_PORTS port;
