@@ -11,10 +11,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-//#include <sys/socket.h>
 #include <netinet/in.h>
-//#include <netinet/ip.h>
-//#include "knxutil.h"
 
 // DEFINES
 #define KNXNETIP_CONF_KEYWORD 			"knxnetip"
@@ -58,6 +55,12 @@
 #define KNX_START_SVC_LIST    			"{"
 #define KNX_END_SVC_LIST      			"}"
 
+typedef struct _KNXNETIP_GRPADDR {
+	uint8_t main;
+	uint8_t mid;
+	uint16_t sub;
+} KNXNETIP_GRPADDR;
+
 typedef struct _KNXNETIP_IPS {
 	uint8_t length;
 	struct sockaddr_in **pdata;
@@ -72,12 +75,6 @@ typedef struct _KNXNETIP_SRVS {
 	uint8_t length;
 	uint16_t **pdata;
 } KNXNETIP_SRVS;
-
-typedef struct _KNXNETIP_GRPADDR {
-	uint8_t main;
-	uint8_t mid;
-	uint16_t sub;
-} KNXNETIP_GRPADDR;
 
 typedef struct _KNXNETIP_GRPADDRS {
 	uint8_t length;

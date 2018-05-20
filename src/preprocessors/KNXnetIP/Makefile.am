@@ -20,8 +20,8 @@ libknxnetip_a_LIBADD = \
 user_interface/knx_ui_snort.o \
 user_interface/knx_ui_config.o \
 knxnetip.o \
-anomaly_detection/knx_ad.o
-
+anomaly_detection/knx_ad.o \
+protocol/knxnetip_dib.o
 
 
 

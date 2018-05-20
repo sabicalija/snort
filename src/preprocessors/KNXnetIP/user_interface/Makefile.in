@@ -581,8 +581,7 @@ uninstall-am:
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am \
-	.c.o .c.obj .c.lo
+	tags tags-am uninstall uninstall-am
 
 .PRECIOUS: Makefile
 

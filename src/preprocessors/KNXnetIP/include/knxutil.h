@@ -8,115 +8,121 @@
 #ifndef __KNXUTIL_H__
 #define __KNXUTIL_H__
 
+#include <stdlib.h>
+#include <stdint.h>
+
 typedef struct _value_string {
     uint32_t   value;
     const char *text;
 } value_string;
 
 /* Common constants */
-#define KNXNETIP_VERSION_10 		    (0x10)
-#define HEADER_SIZE_10                  (0x06)
+#define KNXNETIP_VERSION_10 		                (0x10)
+#define HEADER_SIZE_10                              (0x06)
 
 /* Core Service Type Identifiers */
-#define SEARCH_REQ 				        (0x0201)
-#define SEARCH_RES                      (0x0202)
-#define DESCRIPTION_REQ                 (0x0203)
-#define DESCRIPTION_RES                 (0x0204)
-#define CONNECT_REQ                     (0x0205)
-#define CONNECT_RES                     (0x0206)
-#define CONNECTIONSTATE_REQ             (0x0207)
-#define CONNECTIONSTATE_RES             (0x0208)
-#define DISCONNECT_REQ                  (0x0209)
-#define DISCONNECT_RES                  (0x020A)
+#define SEARCH_REQ 				                    (0x0201)
+#define SEARCH_RES                                  (0x0202)
+#define DESCRIPTION_REQ                             (0x0203)
+#define DESCRIPTION_RES                             (0x0204)
+#define CONNECT_REQ                                 (0x0205)
+#define CONNECT_RES                                 (0x0206)
+#define CONNECTIONSTATE_REQ                         (0x0207)
+#define CONNECTIONSTATE_RES                         (0x0208)
+#define DISCONNECT_REQ                              (0x0209)
+#define DISCONNECT_RES                              (0x020A)
 /* Device Management Service Type Identifiers */
-#define DEVICE_CONFIGURATION_REQ        (0x0310)
-#define DEVICE_CONFIGURATION_ACK        (0x0311)
+#define DEVICE_CONFIGURATION_REQ                    (0x0310)
+#define DEVICE_CONFIGURATION_ACK                    (0x0311)
 /* TUnneling Service Type Identifiers */
-#define TUNNELING_REQ                  (0x0420)
-#define TUNNELING_ACK                  (0x0421)
+#define TUNNELING_REQ                               (0x0420)
+#define TUNNELING_ACK                               (0x0421)
 /* Routing Service Type Identifiers */
-#define ROUTING_INDICATION              (0x0530)
-#define ROUTING_LOST                    (0x0531)
+#define ROUTING_INDICATION                          (0x0530)
+#define ROUTING_LOST                                (0x0531)
 
-#define ROUTING_BUSY                    (0x0532)
-#define REMOTE_DIAG_REQ                 (0x0740)
-#define REMOTE_DIAG_RES                 (0x0741)
-#define REMOTE_BASIC_CONF_REQ           (0x0742)
-#define REMOTE_RESET_REQ                (0x0743)
-#define DIB_DEVICE_INFO                 (0x01)
-#define DIB_SUPP_SVC                    (0x02)
-#define DIB_IP_CONF                     (0x03)
-#define DIB_IP_CURRENT                  (0x04)
-#define DIB_KNX_ADDRESS                 (0x05)
-#define DIB_MFR_DATA                    (0xFE)
-#define KNX_TUNNEL_CONNECTION           (0x04)
-#define FLAGS_DEVICESTATUS_RESERVED     (0xFE)
-#define FLAGS_DEVICESTATUS_PROGRAM      (0x01)
-#define FLAGS_IPCAPABILITES_RESERVED    (0xF8)
-#define FLAGS_IPCAPABILITES_BOOTIP      (0x01)
-#define FLAGS_IPCAPABILITES_DHCP        (0x02)
-#define FLAGS_IPCAPABILITES_AUTOIP      (0x04)
-#define FLAGS_DEVICESTATE_RESERVED      (0xFC)
-#define FLAGS_DEVICESTATE_KNX           (0x01)
-#define FLAGS_DEVICESTATE_IP            (0x02)
+#define ROUTING_BUSY                                (0x0532)
+#define REMOTE_DIAG_REQ                             (0x0740)
+#define REMOTE_DIAG_RES                             (0x0741)
+#define REMOTE_BASIC_CONF_REQ                       (0x0742)
+#define REMOTE_RESET_REQ                            (0x0743)
+
+/* DIB */
+#define DIB_DEVICE_INFO                             (0x01)
+#define DIB_SUPP_SVC                                (0x02)
+#define DIB_IP_CONF                                 (0x03)
+#define DIB_IP_CURRENT                              (0x04)
+#define DIB_KNX_ADDRESS                             (0x05)
+#define DIB_MFR_DATA                                (0xFE)
+
+#define KNX_TUNNEL_CONNECTION                       (0x04)
+#define FLAGS_DEVICESTATUS_RESERVED                 (0xFE)
+#define FLAGS_DEVICESTATUS_PROGRAM                  (0x01)
+#define FLAGS_IPCAPABILITES_RESERVED                (0xF8)
+#define FLAGS_IPCAPABILITES_BOOTIP                  (0x01)
+#define FLAGS_IPCAPABILITES_DHCP                    (0x02)
+#define FLAGS_IPCAPABILITES_AUTOIP                  (0x04)
+#define FLAGS_DEVICESTATE_RESERVED                  (0xFC)
+#define FLAGS_DEVICESTATE_KNX                       (0x01)
+#define FLAGS_DEVICESTATE_IP                        (0x02)
 /*for CEMI*/
-#define RAW_REQ 0x10
-#define DATA_REQ 0x11
-#define POLL_DATA_REQ 0x13
-#define POLL_DATA_CON 0x25
-#define DATA_IND 0x29
-#define BUSMON_IND 0x2B
-#define RAW_IND 0x2D
-#define DATA_CON 0x2E
-#define RAW_CON 0x2F
-#define DATA_CONNEC_REQ 0x41
-#define DATA_INDV_REQ 0x4A
-#define DATA_CONNEC_IND 0x89
-#define DATA_INDV_IND 0x94
-#define RESET_IND 0xF0
-#define RESET_REQ 0xF1
-#define PROPWRITE_CON 0xF5
-#define PROPWRITE_REQ 0xF6
-#define PROPINFO_IND 0xF7
-#define FUNCPROPCOM_REQ 0xF8
-#define FUNCPROPSTATREAD_REQ 0xF9
-#define FUNCPROPCOM_CON 0xFA
-#define PROPREAD_CON 0xFB
-#define PROPREAD_REQ 0xFC
-#define PL_INFO 0x1
-#define RF_INFO 0x2
-#define BUSMON_INFO 0x3
-#define TIME_REL 0x4
-#define TIME_DELAY 0x5
-#define EXEND_TIME 0x6
-#define BIBAT_INFO 0x7
-#define RF_MULTI 0x8
-#define PREAMBEL 0x9
-#define RF_FAST_ACK 0xA
-#define MANU_DATA 0xFE
-#define RESER 0xFF
-#define A_GROUPVALUE_RES 0x040
-#define A_GROUPVALUE_WRT 0x080
-#define A_ADC_RED 0x180
-#define A_ADC_RES 0x1C0
-#define A_MEM_RED 0x200
-#define A_MEM_RES 0x240
-#define A_MEM_WRT 0x280
-#define A_SYS_RED 0x1C8
-#define A_SYS_RES 0x1C9
-#define A_SYS_WRT 0x1CA
-#define A_SYS_BROAD 0x1CB
-#define GROUPADD 0x80
-#define COUPLER_SPECIFIC_SERVICE 0x3C0
-#define A_AUTHORIZE_REQ 0x3D1
-#define A_AUTHORIZE_RES 0x3D2
-#define A_KEY_WRT 0x3D3
-#define A_KEY_RES 0x3D4
-#define A_PROPVALUE_RED 0x3D5
-#define A_PROPVALUE_RES 0x3D6
+#define RAW_REQ                                     (0x10)
+#define DATA_REQ                                    (0x11)
+#define POLL_DATA_REQ                               (0x13)
+#define POLL_DATA_CON                               (0x25)
+#define DATA_IND                                    (0x29)
+#define BUSMON_IND                                  (0x2B)
+#define RAW_IND                                     (0x2D)
+#define DATA_CON                                    (0x2E)
+#define RAW_CON                                     (0x2F)
+#define DATA_CONNEC_REQ                             (0x41)
+#define DATA_INDV_REQ                               (0x4A)
+#define DATA_CONNEC_IND                             (0x89)
+#define DATA_INDV_IND                               (0x94)
+#define RESET_IND                                   (0xF0)
+#define RESET_REQ                                   (0xF1)
+#define PROPWRITE_CON                               (0xF5)
+#define PROPWRITE_REQ                               (0xF6)
+#define PROPINFO_IND                                (0xF7)
+#define FUNCPROPCOM_REQ                             (0xF8)
+#define FUNCPROPSTATREAD_REQ                        (0xF9)
+#define FUNCPROPCOM_CON                             (0xFA)
+#define PROPREAD_CON                                (0xFB)
+#define PROPREAD_REQ                                (0xFC)
+#define PL_INFO                                     (0x1)
+#define RF_INFO                                     (0x2)
+#define BUSMON_INFO                                 (0x3)
+#define TIME_REL                                    (0x4)
+#define TIME_DELAY                                  (0x5)
+#define EXEND_TIME                                  (0x6)
+#define BIBAT_INFO                                  (0x7)
+#define RF_MULTI                                    (0x8)
+#define PREAMBEL                                    (0x9)
+#define RF_FAST_ACK                                 (0xA)
+#define MANU_DATA                                   (0xFE)
+#define RESER                                       (0xFF)
+#define A_GROUPVALUE_RES                            (0x040)
+#define A_GROUPVALUE_WRT                            (0x080)
+#define A_ADC_RED                                   (0x180)
+#define A_ADC_RES                                   (0x1C0)
+#define A_MEM_RED                                   (0x200)
+#define A_MEM_RES                                   (0x240)
+#define A_MEM_WRT                                   (0x280)
+#define A_SYS_RED                                   (0x1C8)
+#define A_SYS_RES                                   (0x1C9)
+#define A_SYS_WRT                                   (0x1CA)
+#define A_SYS_BROAD                                 (0x1CB)
+#define GROUPADD                                    (0x80)
+#define COUPLER_SPECIFIC_SERVICE                    (0x3C0)
+#define A_AUTHORIZE_REQ                             (0x3D1)
+#define A_AUTHORIZE_RES                             (0x3D2)
+#define A_KEY_WRT                                   (0x3D3)
+#define A_KEY_RES                                   (0x3D4)
+#define A_PROPVALUE_RED                             (0x3D5)
+#define A_PROPVALUE_RES                             (0x3D6)
 /* Control field 2 */
-#define DAT_INDIVIDUAL 	0x00
-#define DAT_GROUP		0x80
+#define DAT_INDIVIDUAL 	                            (0x00)
+#define DAT_GROUP		                            (0x80)
 
 static const
 value_string knxnetip_service_identifier[] = {
